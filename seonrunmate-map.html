@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>선런메 — 유세 지도</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+
+/* 기본 리셋 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100vh; overflow: hidden; font-family: 'Noto Sans KR', sans-serif; }
+
+/* 페이지가 항상 보이도록 */
+#map-page {
+  display: flex !important;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* MAP 전용 변수 (라이트 테마) */
+#map-page { --mbg:#f0f2f7;--mwhite:#fff;--msurf:#e8ebf2;--mborder:rgba(0,0,0,0.07);--mtext:#0f1117;--mtext2:#6b7280;--mblue:#1a4fff;--mblue-soft:rgba(26,79,255,0.1);--myellow:#f59e0b;--myellow-soft:rgba(245,158,11,0.12);--mgreen:#10b981;--mgreen-soft:rgba(16,185,129,0.13);--mred:#ef4444;--mshadow:0 2px 16px rgba(0,0,0,0.08);--mshadow-lg:0 8px 40px rgba(0,0,0,0.14); }
+#map-page { background:var(--mbg); color:var(--mtext); overflow:hidden; }
+#map-page .m-topbar{display:flex;align-items:center;padding:10px 14px;background:var(--mwhite);border-bottom:1px solid var(--mborder);box-shadow:var(--mshadow);gap:8px;z-index:200;}
+#map-page .m-logo{font-family:'Bebas Neue',cursive;font-size:21px;letter-spacing:1px;color:var(--mblue);}
+#map-page .m-logo span{color:var(--mtext);}
+#map-page .m-mode-sw{margin-left:auto;display:flex;background:var(--msurf);border-radius:20px;padding:3px;gap:2px;}
+#map-page .m-mbtn{padding:5px 13px;border-radius:16px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;color:var(--mtext2);cursor:pointer;transition:all .22s;}
+#map-page .m-mbtn.active{background:var(--mwhite);color:var(--mblue);box-shadow:0 1px 6px rgba(0,0,0,0.1);}
+#map-page .m-export{display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--mblue);color:#fff;border:none;border-radius:18px;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
+#map-page .m-back{padding:6px 12px;background:var(--msurf);color:var(--mtext2);border:none;border-radius:18px;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
+
+#map-page .m-stat{display:flex;background:var(--mwhite);border-bottom:1px solid var(--mborder);}
+#map-page .m-sc{flex:1;padding:9px 0;text-align:center;border-right:1px solid var(--mborder);}
+#map-page .m-sc:last-child{border-right:none;}
+#map-page .m-sn{font-family:'Bebas Neue',cursive;font-size:24px;line-height:1;}
+#map-page .m-sl{font-size:9px;color:var(--mtext2);margin-top:1px;}
+#map-page .m-sc.blue .m-sn{color:var(--mblue);}
+#map-page .m-sc.green .m-sn{color:var(--mgreen);}
+#map-page .m-sc.yellow .m-sn{color:var(--myellow);}
+
+#map-page .m-mapwrap{flex:1;position:relative;overflow:hidden;}
+#map-page .m-mapbg{position:absolute;inset:0;background:linear-gradient(rgba(26,79,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(26,79,255,.035) 1px,transparent 1px);background-size:44px 44px;background-color:#e8ecf5;}
+#map-page .mroad{position:absolute;border-radius:2px;}
+#map-page .mroad.h{height:15px;background:#d4d9e8;}
+#map-page .mroad.v{width:15px;background:#d4d9e8;}
+#map-page .mroad.h.main{height:24px;background:#c8cfe3;}
+#map-page .mroad.v.main{width:24px;background:#c8cfe3;}
+#map-page .m-hblob{position:absolute;border-radius:50%;pointer-events:none;}
+#map-page .m-hblob.hi{background:radial-gradient(circle,rgba(239,68,68,.2) 0%,transparent 70%);}
+#map-page .m-hblob.md{background:radial-gradient(circle,rgba(245,158,11,.16) 0%,transparent 70%);}
+#map-page .m-hblob.lo{background:radial-gradient(circle,rgba(26,79,255,.11) 0%,transparent 70%);}
+
+#map-page .mpoi{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;display:flex;flex-direction:column;align-items:center;gap:4px;}
+#map-page .mpoi-b{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;border:3px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.16);transition:transform .18s;position:relative;}
+#map-page .mpoi-b::before{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;opacity:.25;animation:mring 2.5s ease-out infinite;}
+@keyframes mring{0%{inset:-4px;opacity:.45;}100%{inset:-20px;opacity:0;}}
+#map-page .mpoi:hover .mpoi-b{transform:scale(1.13);}
+#map-page .mpoi-l{font-size:10px;font-weight:700;color:var(--mtext);background:var(--mwhite);padding:2px 8px;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.11);white-space:nowrap;}
+#map-page .mpoi.done .mpoi-b{filter:grayscale(.6);opacity:.65;}
+#map-page .mpoi.done .mpoi-b::before{display:none;}
+#map-page .mgc{background:var(--mblue-soft);color:var(--mblue);}
+#map-page .mvc{background:var(--myellow-soft);color:var(--myellow);}
+#map-page .mdc{background:#f3f4f6;color:#9ca3af;}
+
+#map-page .m-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:49;pointer-events:none;transition:background .3s;}
+#map-page .m-backdrop.show{background:rgba(0,0,0,.3);pointer-events:all;}
+
+#map-page .m-bsheet{position:absolute;bottom:0;left:0;right:0;background:var(--mwhite);border-radius:22px 22px 0 0;box-shadow:var(--mshadow-lg);transform:translateY(100%);transition:transform .33s cubic-bezier(.32,.72,0,1);z-index:50;max-height:88vh;overflow-y:auto;}
+#map-page .m-bsheet.open{transform:translateY(0);}
+#map-page .m-bhandle{width:38px;height:4px;background:#e5e7eb;border-radius:3px;margin:11px auto 0;}
+#map-page .m-bclose{position:absolute;top:11px;right:14px;width:28px;height:28px;border-radius:50%;background:#f3f4f6;border:none;font-size:15px;color:var(--mtext2);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* simple sheet */
+#map-page .ms-hd{display:flex;align-items:center;gap:13px;padding:18px 18px 14px;}
+#map-page .ms-ic{width:52px;height:52px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;}
+#map-page .ms-nm{font-size:17px;font-weight:900;line-height:1.25;}
+#map-page .ms-sb{font-size:11px;color:var(--mtext2);margin-top:2px;}
+#map-page .ms-ia{padding:0 18px 18px;display:flex;flex-direction:column;align-items:center;gap:0;}
+#map-page .ms-ask{font-size:14px;font-weight:700;color:var(--mtext2);text-align:center;margin-bottom:12px;}
+#map-page .ms-nb{display:flex;align-items:flex-end;gap:6px;margin-bottom:20px;}
+#map-page .ms-big{font-family:'Bebas Neue',cursive;font-size:88px;color:var(--mblue);line-height:1;min-width:160px;text-align:center;letter-spacing:2px;transition:color .15s;}
+#map-page .ms-big.nonzero{color:var(--mtext);}
+#map-page .ms-unit{font-size:18px;font-weight:700;color:var(--mtext2);padding-bottom:14px;}
+#map-page .m-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:280px;margin-bottom:20px;}
+#map-page .mkk{height:58px;border-radius:16px;border:none;background:var(--msurf);font-family:'Bebas Neue',cursive;font-size:26px;color:var(--mtext);cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+#map-page .mkk:active{transform:scale(.93);background:#d8dce8;}
+#map-page .mkk.del{font-family:'Noto Sans KR',sans-serif;font-size:20px;background:#f3f4f6;color:var(--mtext2);}
+#map-page .mkk.zero{grid-column:span 2;}
+#map-page .ms-ok{width:100%;max-width:280px;height:60px;border-radius:18px;border:none;background:var(--mgreen);color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 4px 20px rgba(16,185,129,.35);transition:all .18s;}
+#map-page .ms-ok:active{transform:scale(.97);}
+#map-page .ms-ok.zero-state{background:#e5e7eb;color:var(--mtext2);box-shadow:none;}
+#map-page .ms-log{margin:14px 18px 24px;background:var(--msurf);border-radius:16px;padding:13px 14px;}
+#map-page .ms-lt{font-size:10px;font-weight:700;color:var(--mtext2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;}
+#map-page .ms-li{display:flex;align-items:center;gap:10px;}
+#map-page .ms-lt2{font-family:'DM Mono',monospace;font-size:11px;color:var(--mtext2);width:38px;flex-shrink:0;}
+#map-page .ms-ln{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--mgreen);line-height:1;}
+#map-page .ms-lu{font-size:10px;color:var(--mtext2);margin-top:2px;}
+#map-page .ms-le{font-size:12px;color:var(--mtext2);text-align:center;padding:6px 0;}
+
+/* detail sheet */
+#map-page .md-tabs{display:flex;padding:8px 16px 0;gap:2px;border-bottom:1px solid var(--mborder);}
+#map-page .md-tab{padding:9px 16px;font-size:12px;font-weight:700;color:var(--mtext2);border-bottom:3px solid transparent;cursor:pointer;transition:all .2s;border-radius:6px 6px 0 0;}
+#map-page .md-tab.active{color:var(--mblue);border-bottom-color:var(--mblue);}
+#map-page .md-tc{display:none;padding:16px 16px 28px;}
+#map-page .md-tc.active{display:block;}
+#map-page .md-hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+#map-page .md-ic{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+#map-page .md-nm{font-size:16px;font-weight:900;}
+#map-page .md-ad{font-size:11px;color:var(--mtext2);margin-top:2px;}
+#map-page .md-badge{margin-left:auto;font-size:10px;font-weight:700;padding:3px 11px;border-radius:20px;flex-shrink:0;}
+#map-page .md-badge.g{background:var(--mblue-soft);color:var(--mblue);}
+#map-page .md-badge.v{background:var(--myellow-soft);color:var(--myellow);}
+#map-page .m-scores{display:flex;gap:7px;margin-bottom:14px;}
+#map-page .msc{flex:1;background:var(--msurf);border-radius:11px;padding:10px;text-align:center;}
+#map-page .msc-v{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+#map-page .msc-v.h{color:var(--mred);}.msc-v.m{color:var(--myellow);}.msc-v.g{color:var(--mgreen);}
+#map-page .msc-l{font-size:9px;color:var(--mtext2);margin-top:3px;}
+#map-page .m-sec{font-size:10px;font-weight:700;color:var(--mtext2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px;}
+#map-page .m-tchart{display:flex;align-items:flex-end;gap:3px;height:50px;margin-bottom:14px;}
+#map-page .m-tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+#map-page .m-tb-b{width:100%;border-radius:3px 3px 0 0;min-height:3px;}
+#map-page .m-tb-l{font-size:8px;color:var(--mtext2);font-family:'DM Mono',monospace;}
+#map-page .m-nearby{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+#map-page .m-nb{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--msurf);border-radius:10px;}
+#map-page .m-nb-e{font-size:16px;width:24px;text-align:center;}
+#map-page .m-nb-n{font-size:12px;font-weight:600;}
+#map-page .m-nb-s{font-size:10px;color:var(--mtext2);}
+#map-page .m-nb-p{margin-left:auto;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;}
+#map-page .m-nb-p.h{background:rgba(239,68,68,.11);color:var(--mred);}
+#map-page .m-nb-p.m{background:var(--myellow-soft);color:var(--myellow);}
+#map-page .m-nb-p.l{background:var(--mblue-soft);color:var(--mblue);}
+#map-page .md-row2{display:flex;gap:7px;}
+#map-page .mfl{display:flex;flex-direction:column;gap:4px;flex:1;}
+#map-page .mfl label{font-size:10px;font-weight:700;color:var(--mtext2);}
+#map-page .mfi,#map-page .mft{background:var(--msurf);border:2px solid transparent;border-radius:11px;color:var(--mtext);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%;}
+#map-page .mfi:focus,#map-page .mft:focus{border-color:var(--mblue);background:#fff;}
+#map-page .mft{resize:vertical;min-height:65px;}
+#map-page .md-save{width:100%;padding:14px;border-radius:13px;border:none;background:var(--mblue);color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,79,255,.28);margin-top:4px;}
+#map-page .md-save:active{transform:scale(.98);}
+#map-page .m-dhist{display:flex;flex-direction:column;gap:7px;margin-top:8px;}
+#map-page .mdv{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--msurf);border-radius:10px;}
+#map-page .mdv-dt{font-family:'DM Mono',monospace;font-size:10px;color:var(--mtext2);}
+#map-page .mdv-c{font-family:'Bebas Neue',cursive;font-size:21px;color:var(--mgreen);line-height:1;}
+#map-page .mdv-u{font-size:9px;color:var(--mtext2);}
+#map-page .mdv-m{font-size:11px;color:var(--mtext2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#map-page .m-dno{text-align:center;color:var(--mtext2);font-size:12px;padding:16px 0;}
+#map-page .md-btns{display:flex;gap:7px;margin-top:12px;}
+#map-page .md-btn{flex:1;padding:12px;border-radius:12px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+#map-page .md-btn.p{background:var(--mblue);color:#fff;}
+#map-page .md-btn.s{background:var(--msurf);color:var(--mtext2);}
+#map-page .md-btn.g{background:var(--mgreen-soft);color:var(--mgreen);}
+#map-page .m-badge{position:absolute;top:11px;left:11px;z-index:20;display:flex;align-items:center;gap:5px;background:var(--mwhite);border-radius:20px;padding:5px 13px;box-shadow:var(--mshadow);font-size:10px;font-weight:700;color:var(--mtext2);}
+#map-page .m-bdot{width:7px;height:7px;border-radius:50%;background:var(--mgreen);animation:mpulse 2s infinite;}
+@keyframes mpulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+</style>
+</head>
+<body>
+<div id="map-page" class="page" style="flex-direction:column;">
+  <!-- topbar -->
+  <div class="m-topbar">
+    <button class="m-back" onclick="if(window.parent && window.parent.goto) window.parent.goto('home'); else window.close();">← 홈</button>
+    <div class="m-logo">유세<span>MAP</span></div>
+    <div class="m-mode-sw">
+      <button class="m-mbtn active" id="mBtnS" onclick="mSetMode('simple')">⚡ 간편</button>
+      <button class="m-mbtn" id="mBtnD" onclick="mSetMode('detail')">🔍 상세</button>
+    </div>
+    <button class="m-export" onclick="mDoExport()">📥 엑셀</button>
+  </div>
+
+  <!-- stat strip -->
+  <div class="m-stat">
+    <div class="m-sc blue"><div class="m-sn">7</div><div class="m-sl">전체 포인트</div></div>
+    <div class="m-sc green"><div class="m-sn" id="mStDone">0</div><div class="m-sl">완료</div></div>
+    <div class="m-sc yellow"><div class="m-sn" id="mStContact">0</div><div class="m-sl">총 접촉</div></div>
+  </div>
+
+  <!-- map -->
+  <div class="m-mapwrap" id="mMapWrap" style="flex:1;position:relative;overflow:hidden;">
+    <div class="m-mapbg"></div>
+    <div class="mroad h main" style="top:35%;left:0;right:0;"></div>
+    <div class="mroad h" style="top:22%;left:0;right:0;"></div>
+    <div class="mroad h" style="top:60%;left:0;right:0;"></div>
+    <div class="mroad h" style="top:77%;left:0;right:0;"></div>
+    <div class="mroad v main" style="left:40%;top:0;bottom:0;"></div>
+    <div class="mroad v" style="left:18%;top:0;bottom:0;"></div>
+    <div class="mroad v" style="left:66%;top:0;bottom:0;"></div>
+    <div class="mroad v" style="left:83%;top:0;bottom:0;"></div>
+
+    <div class="m-hblob hi" style="width:190px;height:190px;top:26%;left:36%;transform:translate(-50%,-50%)"></div>
+    <div class="m-hblob hi" style="width:170px;height:170px;top:56%;left:63%;"></div>
+    <div class="m-hblob md" style="width:200px;height:200px;top:16%;left:62%;"></div>
+    <div class="m-hblob md" style="width:155px;height:155px;top:69%;left:20%;"></div>
+    <div class="m-hblob lo" style="width:220px;height:220px;top:42%;left:82%;"></div>
+
+    <div class="mpoi" style="top:34%;left:40%" onclick="mOpenPoi('호매실 전통시장 입구','greeting')"><div class="mpoi-b mgc">🙋</div><div class="mpoi-l">전통시장</div></div>
+    <div class="mpoi" style="top:56%;left:64%" onclick="mOpenPoi('권선1동 주민센터 앞','greeting')"><div class="mpoi-b mgc">🙋</div><div class="mpoi-l">주민센터</div></div>
+    <div class="mpoi" style="top:22%;left:66%" onclick="mOpenPoi('곡선동 아파트 단지','greeting')"><div class="mpoi-b mgc">🙋</div><div class="mpoi-l">곡선 아파트</div></div>
+    <div class="mpoi" style="top:77%;left:36%" onclick="mOpenPoi('호매실로 차량유세','vehicle')"><div class="mpoi-b mvc">🚗</div><div class="mpoi-l">호매실로</div></div>
+    <div class="mpoi" style="top:60%;left:18%" onclick="mOpenPoi('경수대로 차량유세','vehicle')"><div class="mpoi-b mvc">🚗</div><div class="mpoi-l">경수대로</div></div>
+    <div class="mpoi done" style="top:34%;left:18%" onclick="mOpenPoi('구운동 먹자골목','done')"><div class="mpoi-b mdc">✅</div><div class="mpoi-l">구운 먹자골목</div></div>
+    <div class="mpoi done" style="top:22%;left:40%" onclick="mOpenPoi('세류3동 행정복지센터','done')"><div class="mpoi-b mdc">✅</div><div class="mpoi-l">세류 복지센터</div></div>
+
+    <div class="m-badge"><div class="m-bdot"></div><span id="mModeLabel">⚡ 간편 모드</span></div>
+    <div class="m-backdrop" id="mBackdrop" onclick="mCloseAll()"></div>
+
+    <!-- SIMPLE SHEET -->
+    <div class="m-bsheet" id="mSimpleSheet">
+      <button class="m-bclose" onclick="mCloseAll()">✕</button>
+      <div class="m-bhandle"></div>
+      <div class="ms-hd">
+        <div class="ms-ic" id="ms-ic">🙋</div>
+        <div><div class="ms-nm" id="ms-nm">—</div><div class="ms-sb" id="ms-sb">—</div></div>
+      </div>
+      <div class="ms-ia">
+        <div class="ms-ask">몇 명과 인사했나요?</div>
+        <div class="ms-nb">
+          <div class="ms-big" id="mBigNum">0</div>
+          <div class="ms-unit">명</div>
+        </div>
+        <div class="m-keypad">
+          <button class="mkk" onclick="mKp('1')">1</button><button class="mkk" onclick="mKp('2')">2</button><button class="mkk" onclick="mKp('3')">3</button>
+          <button class="mkk" onclick="mKp('4')">4</button><button class="mkk" onclick="mKp('5')">5</button><button class="mkk" onclick="mKp('6')">6</button>
+          <button class="mkk" onclick="mKp('7')">7</button><button class="mkk" onclick="mKp('8')">8</button><button class="mkk" onclick="mKp('9')">9</button>
+          <button class="mkk zero" onclick="mKp('0')">0</button><button class="mkk del" onclick="mKp('del')">⌫</button>
+        </div>
+        <button class="ms-ok zero-state" id="mConfirmBtn" onclick="mSimpleSave()">✅ 완료 기록</button>
+      </div>
+      <div class="ms-log">
+        <div class="ms-lt">오늘 이 포인트 기록</div>
+        <div id="mSLogList"><div class="ms-le">아직 없음</div></div>
+      </div>
+    </div>
+
+    <!-- DETAIL SHEET -->
+    <div class="m-bsheet" id="mDetailSheet">
+      <button class="m-bclose" onclick="mCloseAll()">✕</button>
+      <div class="m-bhandle"></div>
+      <div class="md-tabs">
+        <div class="md-tab active" onclick="mDTab('info')">📍 포인트 정보</div>
+        <div class="md-tab" onclick="mDTab('rec')">✏️ 활동 기록</div>
+      </div>
+      <div class="md-tc active" id="mdt-info">
+        <div class="md-hd">
+          <div class="md-ic" id="md-ic">🙋</div>
+          <div><div class="md-nm" id="md-nm">—</div><div class="md-ad" id="md-ad">—</div></div>
+          <div class="md-badge g" id="md-badge">거리인사</div>
+        </div>
+        <div class="m-scores">
+          <div class="msc"><div class="msc-v h" id="md-flow">★★★★★</div><div class="msc-l">유동인구</div></div>
+          <div class="msc"><div class="msc-v m" id="md-best">오전 8–10시</div><div class="msc-l">최적 시간</div></div>
+          <div class="msc"><div class="msc-v g" id="md-est">약 480명/h</div><div class="msc-l">시간당 추정</div></div>
+        </div>
+        <div class="m-sec">⏰ 시간대별 유동인구</div>
+        <div class="m-tchart" id="md-chart"></div>
+        <div class="m-sec">📍 주변 시설</div>
+        <div class="m-nearby" id="md-nearby"></div>
+        <div class="md-btns">
+          <button class="md-btn p" onclick="mDTab('rec')">✏️ 기록하기</button>
+          <button class="md-btn g" id="md-done-btn" onclick="mMarkDone()">✅ 완료 처리</button>
+        </div>
+      </div>
+      <div class="md-tc" id="mdt-rec">
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div class="md-row2">
+            <div class="mfl"><label>📅 방문 일시</label><input class="mfi" id="md-date" type="datetime-local"></div>
+            <div class="mfl"><label>👥 접촉 인원</label><input class="mfi" id="md-contact" type="number" min="0" placeholder="명"></div>
+          </div>
+          <div class="mfl"><label>✍️ 메모</label><textarea class="mft" id="md-memo" placeholder="현장 반응, 특이사항 등"></textarea></div>
+          <div class="mfl"><label>👤 담당자</label><input class="mfi" id="md-person" placeholder="이름"></div>
+          <button class="md-save" onclick="mDetailSave()">💾 기록 저장</button>
+          <div>
+            <div class="m-sec" style="margin-top:4px">📋 방문 기록</div>
+            <div class="m-dhist" id="md-hist"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── 유세맵 데이터 ──
+const MPOI = {
+  '호매실 전통시장 입구':{type:'greeting',addr:'수원시 권선구 호매실로 일대',flow:'★★★★★',best:'오전 9–11시',est:'약 380명/h',
+    bars:[2,2,3,5,10,25,60,80,85,90,85,75,55,40,45,50,60,65,50,30,20,10,5,2],
+    nearby:[{e:'🛒',n:'전통시장',s:'상인·방문객 밀집',p:'h',pl:'매우 많음'},{e:'🚌',n:'버스정류장',s:'다수 노선',p:'m',pl:'보통'},{e:'🏘️',n:'주변 아파트',s:'5,000세대+',p:'h',pl:'매우 많음'}]},
+  '권선1동 주민센터 앞':{type:'greeting',addr:'수원시 권선구 권선1동 행정복지센터',flow:'★★★☆☆',best:'오전 10–12시',est:'약 210명/h',
+    bars:[1,1,2,4,8,20,40,55,65,70,65,55,45,40,42,44,48,52,45,30,18,10,5,2],
+    nearby:[{e:'🏛️',n:'주민센터',s:'민원인 왕래',p:'m',pl:'보통'},{e:'🏫',n:'인근 학교',s:'학부모 동선',p:'m',pl:'보통'}]},
+  '곡선동 아파트 단지':{type:'greeting',addr:'수원시 권선구 곡선동 신규 단지 정문',flow:'★★★★☆',best:'오전 7–9시 / 오후 5–7시',est:'약 300명/h',
+    bars:[5,5,8,10,20,40,70,60,40,30,25,28,30,35,40,45,50,65,75,70,50,25,12,6],
+    nearby:[{e:'🏠',n:'신규 아파트',s:'3040 세대 다수',p:'h',pl:'매우 많음'},{e:'🏫',n:'곡정고·규장초',s:'학부모 밀집',p:'h',pl:'매우 많음'}]},
+  '호매실로 차량유세':{type:'vehicle',addr:'수원시 권선구 호매실로 전 구간',flow:'★★★★☆',best:'출퇴근 7–9 / 18–20시',est:'차량 1,000대/h',
+    bars:[5,5,8,10,20,60,90,85,50,40,35,40,45,50,45,40,50,80,95,85,60,30,15,8],
+    nearby:[{e:'🚦',n:'주요 교차로',s:'신호대기 효과↑',p:'h',pl:'매우 많음'},{e:'🏢',n:'상업지구',s:'유동 차량 多',p:'h',pl:'매우 많음'}]},
+  '경수대로 차량유세':{type:'vehicle',addr:'수원시 권선구 경수대로 일부 구간',flow:'★★★☆☆',best:'오전 7–9시',est:'차량 800대/h',
+    bars:[10,8,10,15,25,55,85,75,45,35,30,35,38,40,38,36,45,70,80,70,50,25,15,10],
+    nearby:[{e:'🏘️',n:'권선·세류 주거지',s:'출퇴근 차량',p:'m',pl:'보통'}]},
+  '구운동 먹자골목':{type:'done',addr:'수원시 권선구 구운동 상업가로',flow:'★★★★☆',best:'완료됨',est:'접촉 약 220명',
+    bars:[2,2,3,5,10,20,35,40,45,50,55,60,65,70,75,80,85,75,60,40,25,15,8,3],
+    nearby:[{e:'🍽️',n:'먹자골목',s:'저녁 유동인구↑',p:'h',pl:'매우 많음'},{e:'👩‍💼',n:'청년 상인',s:'소상공인 밀집',p:'m',pl:'보통'}]},
+  '세류3동 행정복지센터':{type:'done',addr:'수원시 권선구 세류3동 신청사',flow:'★★★☆☆',best:'완료됨',est:'접촉 약 160명',
+    bars:[2,2,3,5,10,20,40,55,60,65,60,50,40,35,38,40,45,50,45,35,20,10,5,2],
+    nearby:[{e:'🏛️',n:'신청사',s:'건축 관심 높음',p:'m',pl:'보통'},{e:'🧓',n:'경로당',s:'고령 주민 多',p:'m',pl:'보통'}]},
+};
+
+let mMode='simple', mCurPoi=null, mNumStr='', mRecords=[], mDoneCount=0;
+mRecords.push({poi:'구운동 먹자골목',type:'거리인사',dt:'18:30',contact:220,memo:'',name:''});
+mRecords.push({poi:'세류3동 행정복지센터',type:'거리인사',dt:'15:45',contact:160,memo:'',name:''});
+mDoneCount=2; mUpdateStats();
+
+function mUpdateStats(){
+  const tot=mRecords.reduce((s,r)=>s+(r.contact||0),0);
+  document.getElementById('mStContact').textContent=tot>=1000?(tot/1000).toFixed(1)+'k':tot;
+  document.getElementById('mStDone').textContent=mDoneCount;
+}
+function mSetMode(m){
+  mMode=m;
+  document.getElementById('mBtnS').classList.toggle('active',m==='simple');
+  document.getElementById('mBtnD').classList.toggle('active',m==='detail');
+  document.getElementById('mModeLabel').textContent=m==='simple'?'⚡ 간편 모드':'🔍 상세 모드';
+  mCloseAll();
+}
+function mOpenPoi(name,type){
+  mCurPoi=name; mNumStr='';
+  const d=MPOI[name];
+  if(mMode==='simple'){
+    const em=type==='vehicle'?'🚗':type==='done'?'✅':'🙋';
+    const ic=document.getElementById('ms-ic');
+    ic.textContent=em;
+    ic.style.background=type==='vehicle'?'var(--myellow-soft)':type==='done'?'#f3f4f6':'var(--mblue-soft)';
+    document.getElementById('ms-nm').textContent=name;
+    document.getElementById('ms-sb').textContent=d.addr;
+    mRefreshNum(); mRenderSLog();
+    mShow('mSimpleSheet');
+  } else {
+    const em=type==='vehicle'?'🚗':type==='done'?'✅':'🙋';
+    const di=document.getElementById('md-ic');
+    di.textContent=em;
+    di.style.background=type==='vehicle'?'var(--myellow-soft)':type==='done'?'#f3f4f6':'var(--mblue-soft)';
+    document.getElementById('md-nm').textContent=name;
+    document.getElementById('md-ad').textContent=d.addr;
+    const badge=document.getElementById('md-badge');
+    badge.textContent=type==='vehicle'?'차량유세':type==='done'?'완료':'거리인사';
+    badge.className='md-badge '+(type==='vehicle'?'v':'g');
+    document.getElementById('md-flow').textContent=d.flow;
+    document.getElementById('md-best').textContent=d.best;
+    document.getElementById('md-est').textContent=d.est;
+    document.getElementById('md-done-btn').style.display=type==='done'?'none':'';
+    const chart=document.getElementById('md-chart');
+    const vals=d.bars.filter((_,i)=>i%2===0), max=Math.max(...vals), nowH=new Date().getHours();
+    const lbls=['0','2','4','6','8','10','12','14','16','18','20','22'];
+    chart.innerHTML=vals.map((v,i)=>{
+      const h=i*2,isNow=Math.abs(h-nowH)<=1,pct=Math.round(v/max*100);
+      const col=v>70?'var(--mred)':v>40?'var(--myellow)':'var(--mblue)';
+      return `<div class="m-tb"><div class="m-tb-b" style="height:${pct}%;background:${col};opacity:${isNow?1:.28}"></div><div class="m-tb-l">${lbls[i]}</div></div>`;
+    }).join('');
+    document.getElementById('md-nearby').innerHTML=d.nearby.map(n=>`
+      <div class="m-nb"><div class="m-nb-e">${n.e}</div>
+      <div><div class="m-nb-n">${n.n}</div><div class="m-nb-s">${n.s}</div></div>
+      <div class="m-nb-p ${n.p}">${n.pl}</div></div>`).join('');
+    const now2=new Date(); now2.setMinutes(now2.getMinutes()-now2.getTimezoneOffset());
+    document.getElementById('md-date').value=now2.toISOString().slice(0,16);
+    document.getElementById('md-contact').value='';
+    document.getElementById('md-memo').value='';
+    document.getElementById('md-person').value='';
+    mDTab('info'); mRenderDHist();
+    mShow('mDetailSheet');
+  }
+}
+function mShow(id){document.getElementById(id).classList.add('open');document.getElementById('mBackdrop').classList.add('show');}
+function mCloseAll(){['mSimpleSheet','mDetailSheet'].forEach(id=>document.getElementById(id).classList.remove('open'));document.getElementById('mBackdrop').classList.remove('show');}
+function mKp(k){
+  if(k==='del'){mNumStr=mNumStr.slice(0,-1);}
+  else{if(mNumStr.length>=4)return;mNumStr+=k;}
+  mRefreshNum();
+}
+function mRefreshNum(){
+  const n=parseInt(mNumStr)||0;
+  const el=document.getElementById('mBigNum');
+  el.textContent=n||'0';
+  el.className='ms-big'+(n>0?' nonzero':'');
+  document.getElementById('mConfirmBtn').className='ms-ok'+(n===0?' zero-state':'');
+}
+function mSimpleSave(){
+  const n=parseInt(mNumStr)||0;
+  if(n===0){showToast('❗ 인원수를 입력해주세요');return;}
+  const now=new Date();
+  const dt=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  const d=MPOI[mCurPoi];
+  mRecords.push({poi:mCurPoi,type:d.type==='vehicle'?'차량유세':'거리인사',dt,contact:n,memo:'',name:''});
+  mUpdateStats(); mNumStr=''; mRefreshNum(); mRenderSLog();
+  showToast(`✅ ${n}명 기록 완료!`);
+}
+function mRenderSLog(){
+  const list=document.getElementById('mSLogList');
+  const mine=mRecords.filter(r=>r.poi===mCurPoi);
+  if(!mine.length){list.innerHTML='<div class="ms-le">아직 없음</div>';return;}
+  list.innerHTML=mine.slice(-3).reverse().map(r=>`
+    <div class="ms-li" style="margin-bottom:6px">
+      <div class="ms-lt2">${r.dt||''}</div>
+      <div><div class="ms-ln">${r.contact}</div><div class="ms-lu">명</div></div>
+      <div style="flex:1;font-size:11px;color:var(--mtext2)">${r.memo||''}</div>
+    </div>`).join('');
+}
+function mDTab(id){
+  document.querySelectorAll('#map-page .md-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&id==='info')||(i===1&&id==='rec')));
+  document.querySelectorAll('#map-page .md-tc').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`mdt-${id}`).classList.add('active');
+  if(id==='rec') mRenderDHist();
+}
+function mDetailSave(){
+  const dt=document.getElementById('md-date').value;
+  const c=parseInt(document.getElementById('md-contact').value);
+  const memo=document.getElementById('md-memo').value.trim();
+  const name=document.getElementById('md-person').value.trim();
+  if(!dt||isNaN(c)){showToast('❗ 일시와 인원을 입력해주세요');return;}
+  const d=MPOI[mCurPoi];
+  mRecords.push({poi:mCurPoi,type:d.type==='vehicle'?'차량유세':'거리인사',dt:dt.replace('T',' '),contact:c,memo,name});
+  mUpdateStats(); mRenderDHist(); showToast('💾 기록 저장!');
+  document.getElementById('md-contact').value=''; document.getElementById('md-memo').value='';
+}
+function mRenderDHist(){
+  const list=document.getElementById('md-hist');
+  const mine=mRecords.filter(r=>r.poi===mCurPoi);
+  if(!mine.length){list.innerHTML='<div class="m-dno">아직 기록이 없어요</div>';return;}
+  list.innerHTML=mine.slice().reverse().map(r=>`
+    <div class="mdv"><div class="mdv-dt">${r.dt}</div>
+    <div><div class="mdv-c">${r.contact}</div><div class="mdv-u">명</div></div>
+    <div class="mdv-m">${r.memo||'—'}</div></div>`).join('');
+}
+function mMarkDone(){mDoneCount++;mUpdateStats();showToast(`✅ "${mCurPoi}" 완료`);mCloseAll();}
+function mDoExport(){
+  if(!mRecords.length){showToast('❗ 기록 없음');return;}
+  if(typeof XLSX==='undefined'){showToast('❗ 라이브러리 로딩 중');return;}
+  const wb=XLSX.utils.book_new();
+  let cum=0;
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['유세활동 기록부'],[],
+    ['No.','시각','포인트명','유형','접촉인원','누적합계','메모','담당자'],
+    ...mRecords.map((r,i)=>{cum+=r.contact||0;return[i+1,r.dt,r.poi,r.type,r.contact,cum,r.memo,r.name];}),
+    [],['','','','합계',mRecords.reduce((s,r)=>s+(r.contact||0),0),'','','']
+  ]);
+  ws['!cols']=[4,16,22,12,12,12,38,10].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'활동기록');
+  XLSX.writeFile(wb,`유세활동_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('📥 다운로드 완료!');
+}
+document.getElementById('mMapWrap').addEventListener('click',function(e){
+  if(!e.target.closest('.mpoi,.m-bsheet,.m-badge')) mCloseAll();
+});
+</script>
+
+<script>
+  // ── 페이지 전환 ──
+  function goto(id) {
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    const target = document.getElementById(id === 'map' ? 'map-page' : id);
+    target.style.display = 'flex';
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ── 시간 ──
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const el = document.getElementById('field-time');
+    if(el) el.textContent = `현재 시각 ${h}:${m}`;
+  }
+  setInterval(updateTime, 10000);
+  updateTime();
+
+  // ── QA 토글 ──
+  function toggleQA(el) {
+    el.parentElement.classList.toggle('open');
+  }
+
+  // ── 지역별 데이터 ──
+  const locData = {
+    '호매실': {
+      issues: ['광역버스 부족🔥', '학원가 교통', '신축 아파트 주차', '청소년 공간'],
+      hot: ['광역버스 부족🔥'],
+      brief: '호매실지구는 입주 완료 후에도 광역버스 노선 증편이 해결되지 않아 출퇴근 민심이 매우 좋지 않습니다. "버스가 왜 아직도 이렇냐"는 반응이 가장 많습니다. 청소년 문화공간 부재도 30~40대 학부모들에게 반응이 큽니다.',
+      checklist: '• 광역버스 민원 반응 특히 주시\n• "도의원이 경기도 예산으로 해결" 메시지 강조\n• 신축 아파트 앞 유세 효과적\n• 현수막 설치 위치: 호매실로 메인 교차로'
+    },
+    '권선': {
+      issues: ['구도심 낙후', '보행로 정비', '노인 복지', '상가 공실'],
+      hot: ['구도심 낙후'],
+      brief: '권선동은 구도심 지역으로 상대적으로 고령 인구 비율이 높습니다. 도로·보행환경 개선 민원이 많고, 노인 돌봄 서비스 확대 요구가 강합니다. 장애인복지단체 이력을 강조하면 효과적입니다.',
+      checklist: '• 경로당·복지관 근처 유세 집중\n• 복지위원장 이력 적극 언급\n• 보행로 정비 공약 현장 연결\n• 유세 시간: 오전 10시~11시 효과적'
+    },
+    '세류': {
+      issues: ['행복센터 신축', '주거환경', '주차 문제', '소상공인'],
+      hot: ['행복센터 신축'],
+      brief: '세류3동 행정복지센터 신청사 건축이 현재 진행 중인 최대 현안입니다. 도의원이 경기도 예산 확보에 기여할 수 있다는 점을 어필하기 좋은 지역입니다. 소상공인 밀집 지역이므로 민생경제 공약도 유효합니다.',
+      checklist: '• 세류3동 신청사 건축 현황 파악 후 방문\n• "도의원이 예산 뒷받침" 메시지\n• 소상공인 AI·디지털 지원 공약 언급\n• 행복센터 방문 시간 간담회 전후 노릴 것'
+    },
+    '곡선': {
+      issues: ['신도시 입주민', '도로 포장', '학교 과밀', '주차장'],
+      hot: ['학교 과밀'],
+      brief: '곡선동은 신규 입주 아파트가 많아 3040 세대 비율이 높습니다. 곡정고·규장초 인근 도로환경 민원이 최근 처리된 바 있어 구청 행정에 관심이 높습니다. 학교 과밀학급 해소가 이 지역 핵심 관심사입니다.',
+      checklist: '• 초등학교 등하교 시간대 유세 효과\n• 학부모 타깃: 교육 공약 전면 강조\n• 도로공사 완료 구간 현장 사진 활용\n• 아파트 단지 입구 집중 배치'
+    },
+    '구운': {
+      issues: ['먹자골목 상권', '주차', '청년 유동인구', '야간 안전'],
+      hot: ['먹자골목 상권'],
+      brief: '구운동 먹자골목은 저녁 유동인구가 많은 상업지역입니다. 소상공인과 청년 상인들이 많아 민생경제·창업 지원 공약이 잘 먹힙니다. 야간 유세 적합 지역이며 비교적 젊은 유권자 비중이 높습니다.',
+      checklist: '• 저녁 6시 이후 유세 황금시간대\n• 소상공인 간담회 제안 효과적\n• AI·창업 지원 공약 앞세우기\n• 안전·CCTV 관련 공약도 반응 좋음'
+    }
+  };
+
+  function updateLeaderLoc() {
+    const val = document.getElementById('leader-loc').value;
+    const card = document.getElementById('leader-loc-card');
+    if (!val) { card.style.display = 'none'; return; }
+    const d = locData[val];
+    document.getElementById('leader-loc-title').textContent = `📍 ${val} — 이렇게 말하세요`;
+    document.getElementById('leader-loc-body').textContent = d.brief;
+    card.style.display = 'block';
+  }
+
+  function updateScoutLoc() {
+    const val = document.getElementById('scout-loc').value;
+    const wrap = document.getElementById('scout-issues');
+    if (!val) { wrap.style.display = 'none'; return; }
+    const d = locData[val];
+    document.getElementById('scout-loc-name').textContent = `📍 ${val} 주요 이슈`;
+
+    const chips = document.getElementById('scout-chips');
+    chips.innerHTML = d.issues.map(i =>
+      `<span class="issue-chip${d.hot.includes(i) ? ' hot' : ''}">${i}</span>`
+    ).join('');
+
+    document.getElementById('scout-brief').textContent = d.brief;
+    document.getElementById('scout-checklist').innerHTML =
+      d.checklist.split('\n').map(l => `<div style="margin-bottom:0.4rem">${l}</div>`).join('');
+
+    wrap.style.display = 'block';
+  }
+
+  // ── 현장 수집 ──
+  let counts = { pos: 0, neg: 0, qst: 0 };
+  let feedItems = [];
+
+  function pressReact(btn, type) {
+    counts[type]++;
+    document.getElementById('cnt-' + type).textContent = counts[type];
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 300);
+    updateHQ();
+  }
+
+  function submitField() {
+    const memo = document.getElementById('field-memo').value.trim();
+    const loc  = document.getElementById('field-loc-select').value;
+    const now  = new Date();
+    const t    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    // 반응 요약 피드
+    if (counts.pos + counts.neg + counts.qst > 0) {
+      feedItems.unshift({
+        type: counts.pos >= counts.neg ? 'pos' : 'neg',
+        text: `긍정 ${counts.pos} / 부정 ${counts.neg} / 질문 ${counts.qst}건`,
+        loc, time: t
+      });
+    }
+    if (memo) {
+      feedItems.unshift({ type: 'qst', text: memo, loc, time: t });
+    }
+
+    renderFeed();
+    showToast();
+
+    // 리셋
+    counts = { pos: 0, neg: 0, qst: 0 };
+    ['pos','neg','qst'].forEach(k => document.getElementById('cnt-' + k).textContent = '0');
+    document.getElementById('field-memo').value = '';
+    updateHQ();
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById('hq-feed');
+    if (!feedItems.length) return;
+    feed.innerHTML = feedItems.slice(0, 15).map(f => `
+      <div class="feed-item">
+        <div class="feed-badge ${f.type}">${f.type==='pos'?'👍':f.type==='neg'?'👎':'❓'}</div>
+        <div>
+          <div class="feed-text">${f.text}</div>
+          <div class="feed-loc">📍 ${f.loc}</div>
+        </div>
+        <div class="feed-time">${f.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function updateHQ() {
+    // 누적 (데모용 - 실제론 서버에서)
+    const total = counts.pos + counts.neg + counts.qst;
+    const max   = Math.max(counts.pos + counts.neg, 1);
+    document.getElementById('hq-pos').textContent   = counts.pos;
+    document.getElementById('hq-neg').textContent   = counts.neg;
+    document.getElementById('hq-qst').textContent   = counts.qst;
+    document.getElementById('hq-total').textContent = total;
+    document.getElementById('bar-pos').style.width  = Math.round(counts.pos/max*100) + '%';
+    document.getElementById('bar-neg').style.width  = Math.round(counts.neg/max*100) + '%';
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // 초기화
+  goto('home');
+</script>
+</body>
+</html>
