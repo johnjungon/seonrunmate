@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>선거런닝메이트 — 캠프 운영 시스템</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap');
+
+  html {
+    /* 반응형 루트 폰트: 모바일 20px → 데스크탑 26px */
+    font-size: clamp(20px, 2.2vw, 26px);
+  }
+
+  :root {
+    --navy: #0a1628;
+    --navy2: #112040;
+    --blue: #1a3a6e;
+    --gold: #c9a84c;
+    --gold2: #e8c96a;
+    --white: #f5f2ec;
+    --gray: #8a8a8a;
+    --red: #c0392b;
+    --green: #27ae60;
+    --orange: #e67e22;
+    --card-bg: rgba(255,255,255,0.04);
+    --border: rgba(201,168,76,0.2);
+    /* 라이트 (야외용) */
+    --L-bg: #f0f2f6;
+    --L-white: #ffffff;
+    --L-text: #111827;
+    --L-text2: #4b5563;
+    --L-border: #d1d5db;
+    --L-accent: #1a3a6e;
+    --L-accent2: #1d4ed8;
+    --L-green: #15803d;
+    --L-red: #dc2626;
+    --L-orange: #d97706;
+    --L-shadow: 0 2px 12px rgba(0,0,0,0.09);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 1.15rem;
+  }
+
+  /* ── 라이트 페이지 공통 ── */
+  .page-light { background: var(--L-bg); color: var(--L-text); }
+  .page-light .page-header { background: var(--L-white); border-bottom: 2px solid var(--L-border); backdrop-filter: none; background: var(--L-white) !important; }
+  .page-light .page-title { color: var(--L-text); font-size: 1.3rem; font-weight: 800; }
+  .page-light .page-role-badge { color: var(--L-accent2); opacity: 1; font-size: 0.85rem; letter-spacing: 0.15em; }
+  .page-light .back-btn { border: 2px solid var(--L-border); color: var(--L-accent); font-size: 1.1rem; padding: 0.55rem 1rem; background: var(--L-white); }
+  .page-light .section-label { color: var(--L-accent2); font-size: 0.88rem; opacity: 1; font-weight: 800; letter-spacing: 0.15em; }
+  .page-light .page-content { background: var(--L-bg); }
+  .page-light .card { background: var(--L-white); border: 1px solid var(--L-border); box-shadow: var(--L-shadow); }
+  .page-light .card-title { color: var(--L-accent); font-size: 1.15rem; font-weight: 700; }
+  .page-light .card-body { color: var(--L-text); font-size: 1.1rem; line-height: 1.8; font-weight: 400; }
+  .page-light .divider { background: var(--L-border); }
+  .page-light .loc-select { background: var(--L-white); border: 2px solid var(--L-border); color: var(--L-text); font-size: 1.15rem; padding: 0.85rem 1rem; border-radius: 10px; box-shadow: var(--L-shadow); }
+
+  /* ── HOME ── */
+  #home {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(26,58,110,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.15) 0%, transparent 50%),
+      var(--navy);
+  }
+
+  .home-inner {
+    width: 100%;
+    max-width: 460px;
+    padding: 0 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+  }
+
+  .home-header {
+    text-align: center;
+  }
+
+  .campaign-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 0.5rem;
+  }
+
+  .home-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 8vw, 3.8rem);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    color: var(--white);
+  }
+
+  .home-title span {
+    color: var(--gold);
+  }
+
+  .home-sub {
+    font-size: 0.88rem;
+    color: var(--gray);
+    margin-top: 0.4rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+  }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .role-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  .role-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(201,168,76,0.15);
+  }
+
+  .role-card:active { transform: scale(0.97); }
+
+  /* 유세지도 — 2칸 차지 */
+  .role-card.map-card {
+    grid-column: span 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    border-color: rgba(39,174,96,0.45);
+    background: rgba(39,174,96,0.05);
+  }
+
+  .role-card.map-card .role-icon {
+    font-size: 1.6rem;
+    margin: 0;
+  }
+
+  .role-card.map-card .role-name {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .role-card.map-card .role-desc {
+    font-size: 0.72rem;
+    margin: 0;
+  }
+
+  .role-card.leader { border-color: rgba(201,168,76,0.4); }
+  .role-card.scout  { border-color: rgba(39,174,96,0.3); }
+  .role-card.field  { border-color: rgba(230,126,34,0.3); }
+  .role-card.hq     { border-color: rgba(52,152,219,0.3); }
+
+  .role-icon {
+    font-size: 1.8rem;
+    display: block;
+  }
+
+  .role-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .role-desc {
+    font-size: 0.72rem;
+    color: var(--gray);
+    line-height: 1.4;
+    font-weight: 300;
+  }
+
+  /* 데스크탑 홈 */
+  @media (min-width: 768px) {
+    .home-inner {
+      max-width: 600px;
+      gap: 1.8rem;
+    }
+    .role-grid {
+      gap: 1rem;
+    }
+    .role-card {
+      padding: 1.3rem 1rem;
+      gap: 0.5rem;
+    }
+    .role-icon { font-size: 2rem; }
+    .role-name { font-size: 1.1rem; }
+    .role-desc { font-size: 0.78rem; }
+    .role-card.map-card { padding: 1rem 1.5rem; }
+  }
+
+  /* ── PAGES ── */
+  .page {
+    display: none !important;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  .page.active { display: flex !important; }
+
+  /* PAGE HEADER */
+  .page-header {
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(10,22,40,0.9);
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--gold);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { background: var(--border); }
+
+  .page-title-wrap { flex: 1; }
+  .page-role-badge {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .page-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(39,174,96,0.4); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(39,174,96,0); }
+  }
+
+  .page-content {
+    flex: 1;
+    padding: 1.2rem;
+    overflow-y: auto;
+  }
+
+  /* CARDS */
+  .section-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    opacity: 0.9;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gold2);
+    margin-bottom: 0.6rem;
+  }
+
+  .card-body {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: rgba(245,242,236,0.9);
+    font-weight: 400;
+  }
+
+  /* ── LEADER PAGE ── */
+  .talking-point {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    padding: 0.9rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 0.6rem;
+  }
+
+  .point-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--gold);
+    line-height: 1;
+    flex-shrink: 0;
+    width: 28px;
+    opacity: 0.7;
+  }
+
+  .point-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 500;
+  }
+
+  .point-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    margin-top: 0.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* QA */
+  .qa-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 0.6rem;
+    overflow: hidden;
+  }
+
+  .qa-q {
+    padding: 1rem 1.1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    transition: background 0.2s;
+  }
+  .qa-q:hover { background: rgba(255,255,255,0.06); }
+
+  .qa-arrow { color: var(--gold); font-size: 0.82rem; transition: transform 0.2s; }
+  .qa-item.open .qa-arrow { transform: rotate(180deg); }
+
+  .qa-a {
+    display: none;
+    padding: 0 1rem 0.9rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: rgba(245,242,236,0.85);
+    font-weight: 400;
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+  }
+  .qa-item.open .qa-a { display: block; }
+
+
+  /* ── FIELD 라이트 오버라이드 ── */
+  #field .page-content { padding: 0.8rem 1rem; }
+  #field .field-location { color: var(--L-accent2); font-weight: 700; }
+  #field .field-loc-name { color: var(--L-text); font-size: 1.7rem; font-weight: 800; }
+  #field .field-time { color: var(--L-text2); font-size: 1rem; }
+  #field .loc-select { margin-bottom: 0.5rem; }
+  #field .react-btn { color: var(--L-text); border-color: var(--L-border); background: var(--L-white); box-shadow: var(--L-shadow); }
+  #field .react-btn.positive { border-color: #86efac; }
+  #field .react-btn.positive:hover, #field .react-btn.positive.pressed { background: #f0fdf4; border-color: var(--L-green); }
+  #field .react-btn.negative { border-color: #fca5a5; }
+  #field .react-btn.negative:hover, #field .react-btn.negative.pressed { background: #fef2f2; border-color: var(--L-red); }
+  #field .react-btn.question { border-color: #fcd34d; }
+  #field .react-btn.question:hover, #field .react-btn.question.pressed { background: #fffbeb; border-color: var(--L-orange); }
+  #field .react-count { color: var(--L-accent); }
+  #field .memo-area { background: var(--L-white); border: 2px solid var(--L-border); color: var(--L-text); font-size: 1.15rem; }
+  #field .memo-area::placeholder { color: var(--L-text2); }
+  #field .memo-area:focus { border-color: var(--L-accent2); }
+  #field .submit-btn { font-size: 1.15rem; padding: 1rem; }
+
+  /* ── LEADER 라이트 오버라이드 ── */
+  #leader .talking-point { background: var(--L-white); border: 1px solid var(--L-border); box-shadow: var(--L-shadow); }
+  #leader .point-num { color: var(--L-accent2); opacity: 1; }
+  #leader .point-text { color: var(--L-text); font-size: 1.15rem; }
+  #leader .point-tag { background: rgba(29,78,216,0.08); color: var(--L-accent2); border-color: rgba(29,78,216,0.2); font-size: 0.85rem; }
+  #leader .qa-item { border-color: var(--L-border); box-shadow: var(--L-shadow); }
+  #leader .qa-q { background: var(--L-white); color: var(--L-text); font-size: 1.15rem; }
+  #leader .qa-q:hover { background: #f9fafb; }
+  #leader .qa-arrow { color: var(--L-accent2); }
+  #leader .qa-a { color: var(--L-text2); background: #f9fafb; font-size: 1.1rem; border-top-color: var(--L-border); }
+  #leader .card-title { font-size: 1.15rem; }
+
+  /* ── SCOUT 라이트 오버라이드 ── */
+  #scout .sched-item { border-bottom-color: var(--L-border); }
+  #scout .sched-time { color: var(--L-accent2); font-size: 1.25rem; }
+  #scout .sched-place { color: var(--L-text); font-size: 1.15rem; }
+  #scout .sched-note { color: var(--L-text2); font-size: 1rem; }
+  #scout .sched-status.done { background: #f3f4f6; color: #6b7280; }
+  #scout .sched-status.now { background: rgba(29,78,216,0.1); color: var(--L-accent2); font-size: 0.88rem; padding: 0.25rem 0.7rem; }
+  #scout .sched-status.next { background: #f9fafb; color: #9ca3af; }
+  #scout .sched-dot.now { background: var(--L-accent2); box-shadow: 0 0 0 4px rgba(29,78,216,0.15); }
+  #scout .issue-chip { background: #eff6ff; border-color: #bfdbfe; color: var(--L-accent); font-size: 1rem; }
+  #scout .issue-chip.hot { background: #fef2f2; border-color: #fca5a5; color: var(--L-red); }
+  #scout .card-body { font-size: 1.1rem; }
+
+  /* ── SCOUT PAGE ── */
+  .schedule-list { margin-bottom: 1.2rem; }
+
+  .sched-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+
+  .sched-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.15rem;
+    color: var(--gold);
+    width: 52px;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+
+  .sched-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .sched-dot.done { background: var(--gray); }
+  .sched-dot.now  { background: var(--gold); box-shadow: 0 0 0 4px rgba(201,168,76,0.2); }
+  .sched-dot.next { background: rgba(255,255,255,0.2); border: 1px solid var(--gray); }
+
+  .sched-info { flex: 1; }
+  .sched-place { font-size: 1.15rem; font-weight: 600; }
+  .sched-note  { font-size: 0.97rem; color: var(--gray); margin-top: 0.25rem; }
+  .sched-status {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .sched-status.done { background: rgba(138,138,138,0.2); color: var(--gray); }
+  .sched-status.now  { background: rgba(201,168,76,0.2); color: var(--gold); }
+  .sched-status.next { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
+
+  .issue-chip {
+    display: inline-block;
+    background: rgba(26,58,110,0.6);
+    border: 1px solid rgba(26,58,110,0.8);
+    border-radius: 20px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.97rem;
+    margin: 0.25rem 0.25rem 0.25rem 0;
+    color: rgba(245,242,236,0.8);
+  }
+  .issue-chip.hot {
+    background: rgba(192,57,43,0.2);
+    border-color: rgba(192,57,43,0.4);
+    color: #e88;
+  }
+
+  /* LOCATION SELECTOR */
+  .loc-select {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    color: var(--white);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  /* ── FIELD PAGE ── */
+  .field-hero {
+    text-align: center;
+    padding: 1.5rem 0 1rem;
+  }
+
+  .field-location {
+    font-size: 0.82rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .field-loc-name {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  .field-time {
+    font-size: 0.85rem;
+    color: var(--gray);
+  }
+
+  .reaction-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+
+  .react-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    color: var(--white);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 140px;
+  }
+
+  .react-btn:active { transform: scale(0.94); }
+
+  .react-btn.positive { border-color: rgba(39,174,96,0.5); }
+  .react-btn.positive:hover, .react-btn.positive.pressed {
+    background: rgba(39,174,96,0.15);
+    border-color: var(--green);
+    box-shadow: 0 0 16px rgba(39,174,96,0.2);
+  }
+  .react-btn.negative { border-color: rgba(192,57,43,0.4); }
+  .react-btn.negative:hover, .react-btn.negative.pressed {
+    background: rgba(192,57,43,0.15);
+    border-color: var(--red);
+  }
+  .react-btn.question { border-color: rgba(230,126,34,0.4); }
+  .react-btn.question:hover, .react-btn.question.pressed {
+    background: rgba(230,126,34,0.15);
+    border-color: var(--orange);
+  }
+
+  .react-emoji { font-size: 2.8rem; display: block; margin-bottom: 0.5rem; }
+  .react-label { font-size: 1.05rem; font-weight: 700; }
+  .react-count { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--gold); margin-top: 0.4rem; }
+
+  .memo-area {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem;
+    color: var(--white);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.97rem;
+    resize: none;
+    height: 80px;
+    margin-bottom: 0.8rem;
+    line-height: 1.6;
+  }
+  .memo-area::placeholder { color: var(--gray); }
+  .memo-area:focus { outline: none; border-color: var(--gold); }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border: none;
+    border-radius: 10px;
+    padding: 0.9rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .submit-btn:active { transform: scale(0.98); }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green);
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 30px;
+    font-size: 0.97rem;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── HQ PAGE ── */
+  .hq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--gray);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    line-height: 1;
+  }
+
+  .stat-num.green  { color: var(--green); }
+  .stat-num.red    { color: #e88; }
+  .stat-num.orange { color: var(--orange); }
+  .stat-num.gold   { color: var(--gold); }
+
+  .stat-sub {
+    font-size: 0.78rem;
+    color: var(--gray);
+    margin-top: 0.2rem;
+  }
+
+  .progress-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+  .progress-bar.green  { background: var(--green); }
+  .progress-bar.red    { background: var(--red); }
+  .progress-bar.gold   { background: var(--gold); }
+
+  .feed-item {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 1.05rem;
+  }
+
+  .feed-badge {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .feed-badge.pos { background: rgba(39,174,96,0.2); }
+  .feed-badge.neg { background: rgba(192,57,43,0.2); }
+  .feed-badge.qst { background: rgba(230,126,34,0.2); }
+
+  .feed-text { flex: 1; line-height: 1.5; color: rgba(245,242,236,0.8); }
+  .feed-loc  { font-size: 0.78rem; color: var(--gold); margin-top: 0.15rem; }
+  .feed-time { font-size: 0.78rem; color: var(--gray); flex-shrink: 0; }
+
+  .member-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .member-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .member-name { font-size: 1.1rem; font-weight: 600; flex: 1; }
+  .member-role { font-size: 0.9rem; color: var(--gray); }
+  .member-status {
+    font-size: 0.78rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+  .member-status.active  { background: rgba(39,174,96,0.2); color: var(--green); }
+  .member-status.standby { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 1.2rem 0; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+
+  /* ════════════════════════════════════
+     데스크탑 레이아웃 — 스크롤 없이 꽉 채움
+     ════════════════════════════════════ */
+  @media (min-width: 768px) {
+
+    html { font-size: clamp(14px, 1.4vw, 18px); }
+
+    body { overflow: hidden; height: 100vh; }
+
+    /* HOME — 전체 화면 꽉 채움, 카드 잘림 없음 */
+    #home {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      justify-content: center;
+      padding: 1.5rem 2rem;
+      gap: 0;
+    }
+    #home .home-header {
+      margin-bottom: clamp(0.6rem, 1.5vh, 1.4rem);
+      flex-shrink: 0;
+    }
+    #home .home-title { font-size: clamp(2rem, 4.5vw, 3.5rem); }
+    #home .home-sub { font-size: 0.85rem; margin-top: 0.4rem; }
+    #home .role-grid {
+      max-width: 680px;
+      width: 100%;
+      gap: 0.7rem;
+      /* 그리드 높이를 남은 공간에 맞게 */
+      flex: 1;
+      max-height: calc(100vh - 180px);
+      grid-template-rows: 1fr 1fr 0.8fr;
+      align-items: stretch;
+    }
+    #home .role-card {
+      padding: clamp(0.7rem, 1.5vh, 1.2rem) 1.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    #home .role-icon { font-size: 1.8rem; margin-bottom: 0.35rem; }
+    #home .role-name { font-size: 1rem; margin-bottom: 0.15rem; }
+    #home .role-desc { font-size: 0.82rem; line-height: 1.4; }
+    /* 유세지도 카드 — 마지막 행, 가로로 배치 */
+    #home .role-card[onclick*="map"] {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+      grid-column: span 2;
+    }
+    #home .role-card[onclick*="map"] .role-icon {
+      font-size: 2rem;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+    #home .role-card[onclick*="map"] .role-desc {
+      margin-top: 0.2rem;
+    }
+
+    /* 모든 서브 페이지 — 2단 레이아웃 */
+    .page.active:not(#home):not(#map-page) {
+      flex-direction: row !important;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 왼쪽 사이드바 */
+    .desktop-sidebar {
+      width: 260px;
+      min-width: 260px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--L-border);
+      background: var(--L-white);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .page-light .desktop-sidebar { background: var(--L-white); border-right-color: var(--L-border); }
+    #hq .desktop-sidebar { background: var(--navy2); border-right-color: var(--border); }
+
+    .sidebar-header {
+      padding: 1.4rem 1.2rem 1rem;
+      border-bottom: 1px solid var(--L-border);
+    }
+    #hq .sidebar-header { border-bottom-color: var(--border); }
+
+    .sidebar-role {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+      color: var(--L-accent2);
+    }
+    #hq .sidebar-role { color: var(--gold); }
+
+    .sidebar-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--L-text);
+      line-height: 1.2;
+    }
+    #hq .sidebar-title { color: var(--white); }
+
+    .sidebar-back {
+      display: block;
+      margin-top: 0.8rem;
+      padding: 0.55rem 0.9rem;
+      background: var(--L-bg);
+      border: 1.5px solid var(--L-border);
+      border-radius: 8px;
+      color: var(--L-accent);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    #hq .sidebar-back { background: rgba(255,255,255,0.06); border-color: var(--border); color: var(--gold); }
+    .sidebar-back:hover { opacity: 0.8; }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0.8rem;
+    }
+
+    .sidebar-section {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--L-text2);
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.3rem;
+      margin-top: 0.8rem;
+    }
+    .sidebar-section:first-child { margin-top: 0; }
+    #hq .sidebar-section { color: var(--gray); }
+
+    .sidebar-item {
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--L-text);
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.15rem;
+    }
+    #hq .sidebar-item { color: rgba(245,242,236,0.8); }
+    .sidebar-item:hover { background: var(--L-bg); }
+    #hq .sidebar-item:hover { background: rgba(255,255,255,0.06); }
+    .sidebar-item.active {
+      background: rgba(29,78,216,0.08);
+      color: var(--L-accent2);
+      font-weight: 700;
+    }
+    #hq .sidebar-item.active { background: rgba(201,168,76,0.12); color: var(--gold); }
+    .sidebar-item-icon { font-size: 1rem; flex-shrink: 0; }
+
+    .sidebar-live {
+      padding: 0.8rem 1rem;
+      border-top: 1px solid var(--L-border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--L-text2);
+    }
+    #hq .sidebar-live { border-top-color: var(--border); color: var(--gray); }
+
+    /* 오른쪽 메인 콘텐츠 */
+    .desktop-main {
+      flex: 1;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 모바일 헤더 숨기기 */
+    .page:not(#home):not(#map-page) > .page-header { display: none; }
+
+    /* 모바일 page-content 완전 숨김 (데스크탑에선 desktop-panel이 대체) */
+    .page:not(#home):not(#map-page) > .page-content {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    /* desktop-main이 남은 공간 전부 차지 */
+    .desktop-main {
+      flex: 1 1 auto !important;
+      min-width: 0;
+    }
+    /* desktop-sidebar 고정폭 유지 */
+    .desktop-sidebar {
+      flex: 0 0 260px !important;
+    }
+
+    /* 데스크탑 콘텐츠 패널들 */
+    .desktop-panel {
+      display: none;
+      overflow-y: auto;
+      padding: 1.8rem 2rem;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .desktop-panel.active { display: block; }
+
+    /* 데스크탑 2단 패널 (leader - 메시지 + QA 나란히) */
+    .dp-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .dp-col { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* 데스크탑 패널 제목 */
+    .dp-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--L-accent2);
+      margin-bottom: 0.9rem;
+    }
+    #hq .dp-title { color: var(--gold); opacity: 0.85; }
+
+    /* scout 3단 */
+    .dp-cols-3 {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 0.9fr;
+      gap: 1.4rem;
+      align-items: start;
+    }
+
+    /* field — 크게 가운데 */
+    .dp-field-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* hq 2단 */
+    .dp-hq-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    /* 스크롤바 */
+    .desktop-panel::-webkit-scrollbar { width: 5px; }
+    .desktop-panel::-webkit-scrollbar-thumb { background: var(--L-border); border-radius: 3px; }
+    #hq .desktop-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* 맵 페이지는 그대로 */
+    #map-page { height: 100vh; overflow: hidden; }
+  }
+
+  @media (max-width: 767px) {
+    .desktop-sidebar { display: none !important; }
+    .desktop-main { display: none !important; }
+    .desktop-panel { display: none !important; }
+    /* 모바일은 기존 page-header + page-content 사용 */
+    .page:not(#home):not(#map-page) > .page-header { display: flex !important; }
+    .page:not(#home):not(#map-page) > .page-content { display: block !important; }
+  }
+
+</style>
+<script>
+// ══════════════════════════════════════════
+// 선런메 — Supabase REST 클라이언트
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://bokjfaghzmswjzuexmxy.supabase.co';
+const SUPA_KEY = 'sb_publishable_HJAkMnfO3UxfxpOp5k5q6A_q5q_05hE';
+
+// REST 헬퍼
+const _sb = {
+  insert: async function(table, data) {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('저장 실패:', res.status, err);
+      return false;
+    }
+    console.log('✅ 저장 성공');
+    return true;
+  },
+  select: async function(table, filters) {
+    let url = SUPA_URL + '/rest/v1/' + table + '?select=*&order=created_at.desc';
+    if (filters) {
+      Object.entries(filters).forEach(function(pair) {
+        url += '&' + pair[0] + '=eq.' + pair[1];
+      });
+    }
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY
+      }
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  }
+};
+
+// 수행원 이름
+let workerName = localStorage.getItem('workerName') || '';
+
+function confirmName() {
+  const input = document.getElementById('name-input');
+  const val = (input.value || '').trim();
+  if (!val) { input.focus(); return; }
+  workerName = val;
+  localStorage.setItem('workerName', workerName);
+  document.getElementById('name-modal').style.display = 'none';
+  if (window._nameResolve) {
+    window._nameResolve(workerName);
+    window._nameResolve = null;
+  }
+}
+
+function ensureWorkerName() {
+  if (workerName) return Promise.resolve(workerName);
+  return new Promise(function(resolve) {
+    window._nameResolve = resolve;
+    document.getElementById('name-modal').style.display = 'flex';
+    setTimeout(function() {
+      var inp = document.getElementById('name-input');
+      if (inp) inp.focus();
+    }, 100);
+  });
+}
+
+// 현장 반응 저장
+async function saveReactionToDB(reactionType, location, memo) {
+  const name = await ensureWorkerName();
+  return _sb.insert('field_reactions', {
+    worker_name: name,
+    location: location,
+    reaction_type: reactionType,
+    memo: memo || ''
+  });
+}
+
+// 본부 실시간 (폴링)
+let _pollTimer = null;
+
+function subscribeHQ() {
+  loadTodayStats();
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(loadTodayStats, 10000);
+}
+
+async function loadTodayStats() {
+  const today = new Date().toISOString().slice(0, 10);
+  const data = await _sb.select('field_reactions', { session_date: today });
+  if (!Array.isArray(data)) return;
+  const stats = { pos: 0, neg: 0, qst: 0 };
+  data.forEach(function(r) {
+    if (stats[r.reaction_type] !== undefined) stats[r.reaction_type]++;
+  });
+  updateHQStats(stats, data.length);
+  renderFeedFromDB(data);
+}
+
+function updateHQStats(stats, total) {
+  ['pos', 'neg', 'qst'].forEach(function(k) {
+    ['hq-' + k, 'hq-' + k + '2'].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = stats[k];
+    });
+  });
+  ['hq-total', 'hq-total2'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = total;
+  });
+  updateBars();
+}
+
+function handleNewReaction(row) {
+  loadTodayStats();
+}
+
+function updateBars() {
+  const pos = parseInt(document.getElementById('hq-pos') ? document.getElementById('hq-pos').textContent : 0) || 0;
+  const neg = parseInt(document.getElementById('hq-neg') ? document.getElementById('hq-neg').textContent : 0) || 0;
+  const max = Math.max(pos + neg, 1);
+  [['bar-pos', pos], ['bar-neg', neg], ['bar-pos2', pos], ['bar-neg2', neg]].forEach(function(pair) {
+    const el = document.getElementById(pair[0]);
+    if (el) el.style.width = Math.round(pair[1] / max * 100) + '%';
+  });
+}
+
+function renderFeedFromDB(data) {
+  if (!Array.isArray(data)) return;
+  feedItems = data.slice(0, 20).map(function(r) {
+    return {
+      type: r.reaction_type,
+      text: r.memo || (r.reaction_type === 'pos' ? '긍정 반응' : r.reaction_type === 'neg' ? '부정 반응' : '질문'),
+      loc: r.location,
+      worker: r.worker_name,
+      time: new Date(r.created_at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})
+    };
+  });
+  renderFeed();
+  if (typeof renderFeedDesk === 'function') renderFeedDesk();
+}
+
+window._sb = _sb;
+window.saveReactionToDB = saveReactionToDB;
+window.ensureWorkerName = ensureWorkerName;
+window.confirmName = confirmName;
+window.subscribeHQ = subscribeHQ;
+window.loadTodayStats = loadTodayStats;
+window.renderFeedFromDB = renderFeedFromDB;
+window.updateHQStats = updateHQStats;
+window.updateBars = updateBars;
+console.log('✅ 선런메 Supabase 클라이언트 로드 완료 — 전역 등록됨');
+
+// ══════════════════════════════════════════
+// 선런메 — Google Sheets 연동
+// ══════════════════════════════════════════
+const SHEET_ID = '1WA1S_PeG7NxL8K6O8m-gAyfJTiv12J3rfJa6LI-NYwo';
+
+async function fetchSheet(tabName) {
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tabName);
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\((.*)\)/s)[1]);
+    const cols = json.table.cols.map(function(c) { return c.label; });
+    const rows = json.table.rows.map(function(r) {
+      const obj = {};
+      cols.forEach(function(c, i) { obj[c] = r.c[i] ? r.c[i].v : ''; });
+      return obj;
+    });
+    return rows;
+  } catch(e) {
+    console.error('Sheets 로딩 실패:', e);
+    return [];
+  }
+}
+
+let _pledgeCache = null;
+let _scheduleCache = null;
+
+async function loadPledges() {
+  if (_pledgeCache) return _pledgeCache;
+  const rows = await fetchSheet('공약');
+  _pledgeCache = rows;
+  console.log('✅ 공약 ' + rows.length + '개 로드');
+  return rows;
+}
+
+async function loadSchedule() {
+  if (_scheduleCache) return _scheduleCache;
+  const rows = await fetchSheet('일정');
+  _scheduleCache = rows;
+  console.log('✅ 일정 ' + rows.length + '개 로드');
+  return rows;
+}
+
+async function getPledgesByLocation(location) {
+  const all = await loadPledges();
+  return all.filter(function(r) { return r['동네'] === '전체' || r['동네'] === location; });
+}
+
+window.loadPledges = loadPledges;
+window.loadSchedule = loadSchedule;
+window.getPledgesByLocation = getPledgesByLocation;
+console.log('✅ Sheets 연동 준비 완료');
+
+</script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="home-inner">
+    <div class="home-header">
+      <div class="campaign-label">2026 지방선거 캠프 운영 시스템</div>
+      <div class="home-title">선거<span>런닝메이트</span></div>
+      <div class="home-sub">역할을 선택하세요</div>
+    </div>
+    <div class="role-grid">
+      <div class="role-card leader" onclick="goto('leader')">
+        <span class="role-icon">🎙️</span>
+        <div class="role-name">후보 밀착</div>
+        <div class="role-desc">유세 포인트 · 예상 질문</div>
+      </div>
+      <div class="role-card scout" onclick="goto('scout')">
+        <span class="role-icon">🗺️</span>
+        <div class="role-name">선발대</div>
+        <div class="role-desc">일정 확인 · 이슈 브리핑</div>
+      </div>
+      <div class="role-card field" onclick="goto('field')">
+        <span class="role-icon">📡</span>
+        <div class="role-name">현장 수집</div>
+        <div class="role-desc">시민 반응 · 즉시 전송</div>
+      </div>
+      <div class="role-card hq" onclick="goto('hq')">
+        <span class="role-icon">📊</span>
+        <div class="role-name">본부</div>
+        <div class="role-desc">전체 현황 · 대시보드</div>
+      </div>
+      <div class="role-card map-card" onclick="goto('map')">
+        <span class="role-icon">📍</span>
+        <div class="role-name">유세 지도</div>
+        <div class="role-desc">포인트 기록 · 엑셀 내보내기</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ LEADER ═══════════════════════════════ -->
+<div id="leader" class="page page-light">
+  <!-- 모바일 헤더 -->
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">후보 밀착팀</div>
+      <div class="page-title">유세 포인트</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <!-- 데스크탑 사이드바 -->
+  <div class="desktop-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-role">🎙️ 후보 밀착팀</div>
+      <div class="sidebar-title">유세<br>포인트</div>
+      <button class="sidebar-back" onclick="goto('home')">← 홈으로</button>
+    </div>
+    <div class="sidebar-nav">
+      <div class="sidebar-section">콘텐츠</div>
+      <div class="sidebar-item active" onclick="deskSwitch('leader','lp-msg',this)"><span class="sidebar-item-icon">💬</span>핵심 메시지</div>
+      <div class="sidebar-item" onclick="deskSwitch('leader','lp-slogan',this)"><span class="sidebar-item-icon">🏷️</span>슬로건</div>
+      <div class="sidebar-item" onclick="deskSwitch('leader','lp-loc',this)"><span class="sidebar-item-icon">📍</span>지역별 포인트</div>
+      <div class="sidebar-item" onclick="deskSwitch('leader','lp-qa',this)"><span class="sidebar-item-icon">❓</span>예상 질문 대응</div>
+    </div>
+    <div class="sidebar-live"><div class="live-dot"></div>실시간 연동 중</div>
+  </div>
+
+  <!-- 데스크탑 메인 -->
+  <div class="desktop-main">
+    <!-- 패널 1: 핵심 메시지 (데스크탑 전용) -->
+    <div class="desktop-panel active" id="lp-msg">
+      <div class="dp-cols" style="height:auto;align-items:start;">
+        <div class="dp-col">
+          <div class="dp-title">오늘의 핵심 메시지</div>
+          <!-- 메시지 3개 -->
+          <div class="talking-point">
+            <div class="point-num">1</div>
+            <div>
+              <div class="point-text">도 대표의원 4년 경험 → 우리 지역구에 돌려드립니다</div>
+              <div style="font-size:0.9rem;color:var(--L-text2);margin-top:0.5rem;line-height:1.7">광역의회에서 쌓은 네트워크와 예산 집행 경험</div>
+              <span class="point-tag">재선 강점</span>
+            </div>
+          </div>
+          <div class="talking-point">
+            <div class="point-num">2</div>
+            <div>
+              <div class="point-text">버스가 부족합니다 — 경기도 예산으로 바꿉니다</div>
+              <div style="font-size:0.9rem;color:var(--L-text2);margin-top:0.5rem;line-height:1.7">지역 교통 인프라 확충 — 경기도 예산으로 해결</div>
+              <span class="point-tag">생활 민원</span>
+            </div>
+          </div>
+          <div class="talking-point">
+            <div class="point-num">3</div>
+            <div>
+              <div class="point-text">반도체·AI 시대, 수원이 중심이어야 합니다</div>
+              <div style="font-size:0.9rem;color:var(--L-text2);margin-top:0.5rem;line-height:1.7">미래산업 유치와 일자리 창출 — 이미 실행 중</div>
+              <span class="point-tag">미래 비전</span>
+            </div>
+          </div>
+        </div>
+        <div class="dp-col">
+          <div class="dp-title">오늘 강조 포인트</div>
+          <div class="card" style="padding:1.2rem;background:rgba(29,78,216,0.04);border-left:3px solid var(--L-accent2);">
+            <div class="card-body" style="font-weight:600;">야외·현장에서는 핵심 메시지 1개만 반복하세요</div>
+          </div>
+          <div class="card" style="padding:1.2rem;">
+            <div class="card-title">주의사항</div>
+            <div class="card-body" style="margin-top:0.4rem;line-height:2;">• 공약 수치는 정확하게<br>• 상대 후보 비교 발언 자제<br>• 지역 이슈 먼저, 공약은 나중에</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 1-2: 슬로건 (별도 패널) -->
+    <div class="desktop-panel" id="lp-slogan">
+      <div class="dp-title">슬로건</div>
+      <div style="display:flex;flex-direction:column;gap:1rem;max-width:600px;">
+        <div class="card" style="padding:1.6rem;">
+          <div class="card-title" style="font-size:1.2rem;margin-bottom:0.5rem">경험이 다릅니다</div>
+          <div class="card-body">선거런닝메이트, 다시 뛰겠습니다</div>
+        </div>
+        <div class="card" style="padding:1.6rem;">
+          <div class="card-title" style="font-size:1.2rem;margin-bottom:0.5rem">우리 지역의 목소리</div>
+          <div class="card-body">경기도를 움직입니다</div>
+        </div>
+        <div class="card" style="padding:1.6rem;">
+          <div class="card-title" style="font-size:1.2rem;margin-bottom:0.5rem">검증된 의정활동의 성과</div>
+          <div class="card-body">이제 지역에 돌려드립니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 2: 지역별 포인트 -->
+    <div class="desktop-panel" id="lp-loc">
+      <div class="dp-title">지역별 맞춤 포인트</div>
+      <select class="loc-select" id="leader-loc-desk" onchange="updateLeaderLocDesk()" style="max-width:360px;margin-bottom:1.4rem;">
+        <option value="">— 현재 유세 지역 선택 —</option>
+        <option value="지역1">지역1</option>
+        <option value="지역2">지역2</option>
+        <option value="지역3">지역3</option>
+        <option value="지역4">지역4</option>
+        <option value="지역5">지역5</option>
+      </select>
+      <div class="dp-cols">
+        <div id="lp-loc-brief" style="display:none">
+          <div class="card" style="padding:1.4rem">
+            <div class="card-title" id="lp-loc-title-desk" style="font-size:1.1rem;margin-bottom:0.7rem"></div>
+            <div class="card-body" id="lp-loc-body-desk"></div>
+          </div>
+        </div>
+        <div id="lp-loc-empty" style="color:var(--L-text2);font-size:1rem;padding:2rem 0;">← 지역을 선택하면 맞춤 멘트가 나와요</div>
+      </div>
+    </div>
+
+    <!-- 패널 3: QA -->
+    <div class="desktop-panel" id="lp-qa">
+      <div class="dp-title">예상 질문 대응</div>
+      <div style="max-width:680px;display:flex;flex-direction:column;gap:0.7rem;">
+        <div class="qa-item">
+          <div class="qa-q" onclick="toggleQA(this)">"다른 후보와 뭐가 다른가요?"<span class="qa-arrow">▼</span></div>
+          <div class="qa-a">경기도의회 민주당 대표의원을 맡은 도의원은 수원에서 저 혼자입니다. 도지사·경기도 예산을 직접 다루는 자리에서 4년을 보냈습니다. 그 네트워크와 경험을 이제 우리 지역구에 쓸 차례입니다.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q" onclick="toggleQA(this)">"재선인데 그동안 뭘 했나요?"<span class="qa-arrow">▼</span></div>
+          <div class="qa-a">전반기 보건복지위원장으로 장애인·취약계층 지원 예산을 직접 확대했고, 축산농가 지원 예산 증액, 전통식품 육성 조례를 통과시켰습니다. 이제 그 경험을 우리 지역구에 집중할 때입니다.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q" onclick="toggleQA(this)">"교통 문제 언제 해결되나요?"<span class="qa-arrow">▼</span></div>
+          <div class="qa-a">교통 문제는 기초의원이 아닌 광역의원이 경기도 예산으로 해결할 수 있습니다. 경기도 광역교통위원회 예산이 필요합니다. 도의원이 할 수 있는 일이고, 임기 시작 즉시 교통위에 올리겠습니다.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q" onclick="toggleQA(this)">"민주당 정권인데 왜 아직도 해결 안 됐나요?"<span class="qa-arrow">▼</span></div>
+          <div class="qa-a">지방 현안은 중앙 정부가 아니라 경기도의회와 지역구 의원이 직접 챙겨야 합니다. 도의회 대표의원으로서 더 빠르게 처리할 수 있는 구조를 만들었습니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모바일 page-content -->
+  <div class="page-content">
+
+    <div class="section-label">오늘의 핵심 메시지</div>
+    <div class="talking-point">
+      <div class="point-num">1</div>
+      <div>
+        <div class="point-text">도 대표의원 4년 경험 → 우리 지역구에 돌려드립니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">광역의회에서 쌓은 네트워크와 예산 집행 경험</div>
+        <span class="point-tag">재선 강점</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">2</div>
+      <div>
+        <div class="point-text">버스가 부족합니다 — 경기도 예산으로 바꿉니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">지역 교통 인프라 확충 — 경기도 예산으로 해결</div>
+        <span class="point-tag">생활 민원</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">3</div>
+      <div>
+        <div class="point-text">반도체·AI 시대, 수원이 중심이어야 합니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">미래산업 유치와 일자리 창출 — 이미 실행 중</div>
+        <span class="point-tag">미래 비전</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">지역별 맞춤 포인트</div>
+    <select class="loc-select" id="leader-loc" onchange="updateLeaderLoc()">
+      <option value="">— 현재 유세 지역 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+    <div id="leader-loc-card" class="card" style="display:none">
+      <div class="card-title" id="leader-loc-title"></div>
+      <div class="card-body" id="leader-loc-body"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">예상 질문 대응</div>
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">"다른 후보와 뭐가 다른가요?"<span class="qa-arrow">▼</span></div>
+      <div class="qa-a">경기도의회 민주당 대표의원을 맡은 도의원은 수원에서 저 혼자입니다. 도지사·경기도 예산을 직접 다루는 자리에서 4년을 보냈습니다.</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">"재선인데 그동안 뭘 했나요?"<span class="qa-arrow">▼</span></div>
+      <div class="qa-a">전반기 보건복지위원장으로 장애인·취약계층 지원 예산을 확대했고, 축산농가 지원 예산 증액, 전통식품 육성 조례를 통과시켰습니다.</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">"교통 문제 언제 해결되나요?"<span class="qa-arrow">▼</span></div>
+      <div class="qa-a">교통 문제는 기초의원이 아닌 광역의원이 경기도 예산으로 해결할 수 있습니다. 임기 시작 즉시 교통위원회에 올리겠습니다.</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">"민주당 정권인데 왜 아직도 해결 안 됐나요?"<span class="qa-arrow">▼</span></div>
+      <div class="qa-a">지방 현안은 경기도의회와 지역구 의원이 직접 챙겨야 합니다. 이번 임기엔 우리 지역구만 집중해서 실결과를 보여드리겠습니다.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SCOUT ═══════════════════════════════ -->
+<div id="scout" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">선발대</div>
+      <div class="page-title">일정 & 지역 이슈</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <!-- 데스크탑 사이드바 -->
+  <div class="desktop-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-role">🗺️ 선발대</div>
+      <div class="sidebar-title">일정 &<br>지역 이슈</div>
+      <button class="sidebar-back" onclick="goto('home')">← 홈으로</button>
+    </div>
+    <div class="sidebar-nav">
+      <div class="sidebar-section">오늘 일정</div>
+      <div class="sidebar-item active" onclick="deskSwitch('scout','sp-sched',this)"><span class="sidebar-item-icon">📅</span>일정 타임라인</div>
+      <div class="sidebar-section">지역 브리핑</div>
+      <div class="sidebar-item" onclick="deskSwitch('scout','sp-issues',this)"><span class="sidebar-item-icon">🔍</span>이슈 & 체크리스트</div>
+    </div>
+    <div class="sidebar-live"><div class="live-dot"></div>실시간 연동 중</div>
+  </div>
+
+  <!-- 데스크탑 메인 -->
+  <div class="desktop-main">
+    <div class="desktop-panel active" id="sp-sched">
+      <div class="dp-cols" style="grid-template-columns:1fr 1fr;align-items:start;">
+        <div>
+          <div class="dp-title">오늘 일정 (6/3)</div>
+          <div class="schedule-list">
+            <div class="sched-item"><div class="sched-time">09:00</div><div class="sched-dot done"></div><div class="sched-info"><div class="sched-place">전통시장 입구</div><div class="sched-note">시장 상인회 대표 인사</div></div><div class="sched-status done">완료</div></div>
+            <div class="sched-item"><div class="sched-time">10:30</div><div class="sched-dot now"></div><div class="sched-info"><div class="sched-place">주민센터 앞</div><div class="sched-note">현수막 설치 확인 필요 · 주차 협소</div></div><div class="sched-status now">진행중</div></div>
+            <div class="sched-item"><div class="sched-time">13:00</div><div class="sched-dot next"></div><div class="sched-info"><div class="sched-place">아파트 단지 앞</div><div class="sched-note">교통 이슈 집중 지역</div></div><div class="sched-status next">대기</div></div>
+            <div class="sched-item"><div class="sched-time">15:30</div><div class="sched-dot next"></div><div class="sched-info"><div class="sched-place">행정복지센터</div><div class="sched-note">신청사 관련 주민 간담회 직후</div></div><div class="sched-status next">대기</div></div>
+            <div class="sched-item"><div class="sched-time">18:00</div><div class="sched-dot next"></div><div class="sched-info"><div class="sched-place">먹자골목</div><div class="sched-note">저녁 유동인구 집중 유세</div></div><div class="sched-status next">대기</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="dp-title">다음 장소 준비 상태</div>
+          <div class="card" style="padding:1.3rem;margin-bottom:0.8rem">
+            <div class="card-title">13:00 — 지역4 아파트</div>
+            <div class="card-body" style="margin-top:0.5rem">학부모 타깃 지역. 초등학교 하교 시간 겹침. 입구 배치 추천.</div>
+          </div>
+          <div class="card" style="padding:1.3rem">
+            <div class="card-title">⚡ 체크사항</div>
+            <div class="card-body" style="margin-top:0.5rem;line-height:2">• 현수막 지역4 배치 확인<br>• 마이크 충전 상태 점검<br>• 행정복지센터 간담회 종료 시간 재확인</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desktop-panel" id="sp-issues">
+      <div class="dp-title">지역 이슈 브리핑</div>
+      <select class="loc-select" id="scout-loc-desk" onchange="updateScoutLocDesk()" style="max-width:340px;margin-bottom:1.4rem;">
+        <option value="">— 다음 장소 선택 —</option>
+        <option value="지역1">지역1</option>
+        <option value="지역2">지역2</option>
+        <option value="지역3">지역3</option>
+        <option value="지역4">지역4</option>
+        <option value="지역5">지역5</option>
+      </select>
+      <div class="dp-cols" id="sp-issues-content" style="display:none;grid-template-columns:1fr 1fr;">
+        <div>
+          <div class="dp-title" id="sp-loc-name-desk"></div>
+          <div id="sp-chips-desk" style="margin-bottom:1rem"></div>
+          <div class="card" style="padding:1.3rem">
+            <div class="card-body" id="sp-brief-desk"></div>
+          </div>
+        </div>
+        <div>
+          <div class="dp-title">선발대 체크리스트</div>
+          <div class="card" style="padding:1.3rem">
+            <div class="card-body" id="sp-check-desk"></div>
+          </div>
+        </div>
+      </div>
+      <div id="sp-issues-empty" style="color:var(--L-text2);font-size:1rem;padding:2rem 0;">← 장소를 선택하면 이슈 브리핑이 나와요</div>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘 일정 -->
+    <div class="section-label">오늘 일정 (6/3 화)</div>
+    <div class="schedule-list">
+      <div class="sched-item">
+        <div class="sched-time">09:00</div>
+        <div class="sched-dot done"></div>
+        <div class="sched-info">
+          <div class="sched-place">전통시장 입구</div>
+          <div class="sched-note">시장 상인회 대표 인사</div>
+        </div>
+        <div class="sched-status done">완료</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">10:30</div>
+        <div class="sched-dot now"></div>
+        <div class="sched-info">
+          <div class="sched-place">주민센터 앞</div>
+          <div class="sched-note">현수막 설치 확인 필요 · 주차 협소</div>
+        </div>
+        <div class="sched-status now">진행중</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">13:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">아파트 단지 앞</div>
+          <div class="sched-note">입주민 민원 집중 지역 — 교통 이슈</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">15:30</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">행정복지센터</div>
+          <div class="sched-note">신청사 건축 관련 주민 간담회 직후</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">18:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">먹자골목</div>
+          <div class="sched-note">저녁 유동인구 집중 유세</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역 이슈 브리핑 -->
+    <div class="section-label">지역 이슈 브리핑</div>
+    <select class="loc-select" id="scout-loc" onchange="updateScoutLoc()">
+      <option value="">— 다음 장소 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="scout-issues" style="display:none">
+      <div class="card">
+        <div class="card-title" id="scout-loc-name">이슈</div>
+        <div id="scout-chips"></div>
+        <div class="divider" style="margin: 0.8rem 0;"></div>
+        <div class="card-body" id="scout-brief"></div>
+      </div>
+
+      <div class="card" style="margin-top: 0.8rem;">
+        <div class="card-title">⚡ 선발대 체크리스트</div>
+        <div class="card-body" id="scout-checklist"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FIELD ═══════════════════════════════ -->
+<div id="field" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">현장 수집</div>
+      <div class="page-title">시민 반응 전송</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <!-- 데스크탑 사이드바 -->
+  <div class="desktop-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-role">📡 현장 수집</div>
+      <div class="sidebar-title">시민 반응<br>전송</div>
+      <button class="sidebar-back" onclick="goto('home')">← 홈으로</button>
+    </div>
+    <div class="sidebar-nav">
+      <div class="sidebar-section">현재 위치</div>
+      <select class="loc-select" id="field-loc-desk" style="margin:0 0 0.5rem;font-size:0.9rem;padding:0.6rem 0.8rem;">
+        <option>지역1</option><option>지역2</option><option>지역3</option><option>지역4</option><option>지역5</option>
+      </select>
+      <div class="sidebar-section" style="margin-top:1rem">오늘 통계</div>
+      <div style="padding:0.5rem 0.6rem;display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        <div style="background:rgba(21,128,61,0.08);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--L-green)" id="field-desk-pos">0</div>
+          <div style="font-size:0.7rem;color:var(--L-text2)">긍정</div>
+        </div>
+        <div style="background:rgba(220,38,38,0.08);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--L-red)" id="field-desk-neg">0</div>
+          <div style="font-size:0.7rem;color:var(--L-text2)">부정</div>
+        </div>
+        <div style="background:rgba(217,119,6,0.08);border-radius:8px;padding:0.6rem;text-align:center;grid-column:span 2;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--L-orange)" id="field-desk-qst">0</div>
+          <div style="font-size:0.7rem;color:var(--L-text2)">질문</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-live"><div class="live-dot"></div>실시간 연동 중</div>
+  </div>
+
+  <!-- 데스크탑 메인 -->
+  <div class="desktop-main">
+    <div class="desktop-panel active" id="fp-main">
+      <div class="dp-field-wrap">
+        <div>
+          <div class="dp-title">시민 반응</div>
+          <div class="reaction-grid" style="gap:1rem;margin-bottom:1.5rem;">
+            <button class="react-btn positive" onclick="pressReact(this,'pos');document.getElementById('field-desk-pos').textContent=counts.pos">
+              <span class="react-emoji">👍</span>
+              <div class="react-label">긍정</div>
+              <div class="react-count" id="cnt-pos-d">0</div>
+            </button>
+            <button class="react-btn negative" onclick="pressReact(this,'neg');document.getElementById('field-desk-neg').textContent=counts.neg">
+              <span class="react-emoji">👎</span>
+              <div class="react-label">부정</div>
+              <div class="react-count" id="cnt-neg-d">0</div>
+            </button>
+            <button class="react-btn question" onclick="pressReact(this,'qst');document.getElementById('field-desk-qst').textContent=counts.qst">
+              <span class="react-emoji">❓</span>
+              <div class="react-label">질문</div>
+              <div class="react-count" id="cnt-qst-d">0</div>
+            </button>
+          </div>
+        </div>
+        <div>
+          <div class="dp-title">현장 메모</div>
+          <textarea class="memo-area" id="field-memo-desk" placeholder="시민이 한 말, 주요 질문, 특이사항..." style="height:140px;width:100%;font-size:1rem;"></textarea>
+          <button class="submit-btn" style="margin-top:0.8rem;font-size:1rem;padding:1rem;" onclick="submitFieldDesk()">📤 본부로 전송</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="field-hero">
+      <div class="field-location">현재 위치</div>
+      <select class="loc-select" id="field-loc-select" style="text-align:center; margin-bottom:0.3rem">
+        <option>지역1</option>
+        <option>지역2</option>
+        <option>지역3</option>
+        <option>지역4</option>
+        <option>지역5</option>
+      </select>
+      <div class="field-time" id="field-time"></div>
+    </div>
+
+    <!-- 반응 버튼 3개 -->
+    <div class="section-label" style="text-align:center">시민 반응</div>
+    <div class="reaction-grid">
+      <button class="react-btn positive" onclick="pressReact(this, 'pos')">
+        <span class="react-emoji">👍</span>
+        <div class="react-label">긍정</div>
+        <div class="react-count" id="cnt-pos">0</div>
+      </button>
+      <button class="react-btn negative" onclick="pressReact(this, 'neg')">
+        <span class="react-emoji">👎</span>
+        <div class="react-label">부정</div>
+        <div class="react-count" id="cnt-neg">0</div>
+      </button>
+      <button class="react-btn question" onclick="pressReact(this, 'qst')">
+        <span class="react-emoji">❓</span>
+        <div class="react-label">질문</div>
+        <div class="react-count" id="cnt-qst">0</div>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 메모 -->
+    <div class="section-label">현장 메모 (선택)</div>
+    <textarea class="memo-area" id="field-memo" placeholder="시민이 한 말, 주요 질문 내용, 특이사항 등..."></textarea>
+    <button class="submit-btn" onclick="submitField()">📤 본부로 전송</button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ HQ ═══════════════════════════════ -->
+<div id="hq" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">본부</div>
+      <div class="page-title">실시간 대시보드</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <!-- 데스크탑 사이드바 -->
+  <div class="desktop-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-role">📊 본부</div>
+      <div class="sidebar-title">실시간<br>대시보드</div>
+      <button class="sidebar-back" onclick="goto('home')">← 홈으로</button>
+    </div>
+    <div class="sidebar-nav">
+      <div class="sidebar-section">뷰</div>
+      <div class="sidebar-item active" onclick="deskSwitch('hq','hq-overview',this)"><span class="sidebar-item-icon">📈</span>현황 요약</div>
+      <div class="sidebar-item" onclick="deskSwitch('hq','hq-feed',this)"><span class="sidebar-item-icon">📡</span>현장 피드</div>
+      <div class="sidebar-item" onclick="deskSwitch('hq','hq-members',this)"><span class="sidebar-item-icon">👥</span>수행원 현황</div>
+    </div>
+    <div class="sidebar-live"><div class="live-dot"></div>실시간 연동 중</div>
+  </div>
+
+  <!-- 데스크탑 메인 -->
+  <div class="desktop-main">
+
+    <div class="desktop-panel active" id="hq-overview">
+      <div class="dp-title">오늘 현황</div>
+      <div class="dp-hq-wrap" style="margin-bottom:1.5rem;">
+        <div class="stat-card"><div class="stat-label">긍정 반응</div><div class="stat-num green" id="hq-pos2">0</div><div class="progress-bar-wrap"><div class="progress-bar green" id="bar-pos2" style="width:0%"></div></div></div>
+        <div class="stat-card"><div class="stat-label">부정 반응</div><div class="stat-num red" id="hq-neg2">0</div><div class="progress-bar-wrap"><div class="progress-bar red" id="bar-neg2" style="width:0%"></div></div></div>
+        <div class="stat-card"><div class="stat-label">질문 건수</div><div class="stat-num orange" id="hq-qst2">0</div><div class="stat-sub">대응 필요</div></div>
+        <div class="stat-card"><div class="stat-label">총 접촉</div><div class="stat-num gold" id="hq-total2">0</div><div class="stat-sub">명</div></div>
+      </div>
+      <div class="dp-title">최근 피드</div>
+      <div id="hq-feed-desk" style="display:flex;flex-direction:column;gap:0.5rem;color:var(--gray);font-size:0.95rem;padding:1rem 0;">현장 수집 데이터를 기다리는 중...</div>
+    </div>
+
+    <div class="desktop-panel" id="hq-feed">
+      <div class="dp-title">실시간 현장 피드</div>
+      <div id="hq-feed2" style="display:flex;flex-direction:column;gap:0.5rem;max-width:700px;color:var(--gray);font-size:0.95rem;padding:1rem 0;">현장 수집 데이터를 기다리는 중...</div>
+    </div>
+
+    <div class="desktop-panel" id="hq-members">
+      <div class="dp-title">수행원 현황</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;max-width:700px;">
+        <div class="member-row" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;"><div class="member-avatar">김</div><div><div class="member-name">김○○</div><div class="member-role">후보 밀착 · 지역1</div></div><div class="member-status active">활동중</div></div>
+        <div class="member-row" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;"><div class="member-avatar">이</div><div><div class="member-name">이○○</div><div class="member-role">선발대 · 권선1동</div></div><div class="member-status active">활동중</div></div>
+        <div class="member-row" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;"><div class="member-avatar">박</div><div><div class="member-name">박○○</div><div class="member-role">현장 수집 · 지역3</div></div><div class="member-status standby">대기중</div></div>
+        <div class="member-row" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;"><div class="member-avatar">최</div><div><div class="member-name">최○○</div><div class="member-role">현장 수집 · 지역4</div></div><div class="member-status active">활동중</div></div>
+        <div class="member-row" style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;"><div class="member-avatar">정</div><div><div class="member-name">정○○</div><div class="member-role">선발대 · 지역5 준비</div></div><div class="member-status standby">이동중</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-content">
+
+    <!-- 통계 -->
+    <div class="section-label">오늘 현황</div>
+    <div class="hq-grid">
+      <div class="stat-card">
+        <div class="stat-label">긍정 반응</div>
+        <div class="stat-num green" id="hq-pos">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar green" id="bar-pos" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">부정 반응</div>
+        <div class="stat-num red" id="hq-neg">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar red" id="bar-neg" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">질문 건수</div>
+        <div class="stat-num orange" id="hq-qst">0</div>
+        <div class="stat-sub">대응 필요</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">총 접촉</div>
+        <div class="stat-num gold" id="hq-total">0</div>
+        <div class="stat-sub">명</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 실시간 피드 -->
+    <div class="section-label">실시간 현장 피드</div>
+    <div id="hq-feed">
+      <div class="feed-item" style="color:var(--gray); font-size:0.78rem; justify-content:center; padding: 1.5rem 0;">
+        현장 수집 데이터를 기다리는 중...
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 수행원 현황 -->
+    <div class="section-label">수행원 현황</div>
+    <div id="member-list">
+      <div class="member-row">
+        <div class="member-avatar">김</div>
+        <div>
+          <div class="member-name">김○○</div>
+          <div class="member-role">후보 밀착 · 지역1</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">이</div>
+        <div>
+          <div class="member-name">이○○</div>
+          <div class="member-role">선발대 · 권선1동</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">박</div>
+        <div>
+          <div class="member-name">박○○</div>
+          <div class="member-role">현장 수집 · 지역3</div>
+        </div>
+        <div class="member-status standby">대기중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">최</div>
+        <div>
+          <div class="member-name">최○○</div>
+          <div class="member-role">현장 수집 · 지역4</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">정</div>
+        <div>
+          <div class="member-name">정○○</div>
+          <div class="member-role">선발대 · 지역5 준비중</div>
+        </div>
+        <div class="member-status standby">이동중</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 수행원 이름 입력 모달 ── -->
+<div id="name-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;">
+  <div style="
+    background:#fff; border-radius:16px; padding:2rem 1.8rem;
+    width:min(340px, 90vw); box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:0.4rem">👤 수행원 확인</div>
+    <div style="font-size:0.9rem;color:#6b7280;margin-bottom:1.2rem">이름을 입력하면 다음부터 자동으로 사용돼요</div>
+    <input id="name-input" type="text" placeholder="예: 김철수"
+      style="width:100%;padding:0.85rem 1rem;border:2px solid #d1d5db;
+      border-radius:10px;font-size:1rem;font-family:'Noto Sans KR',sans-serif;
+      outline:none;margin-bottom:1rem;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter') confirmName()">
+    <button onclick="confirmName()" style="
+      width:100%;padding:0.9rem;background:#1d4ed8;color:#fff;
+      border:none;border-radius:10px;font-size:1rem;font-weight:700;
+      font-family:'Noto Sans KR',sans-serif;cursor:pointer;">
+      확인
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ 본부에 전송되었습니다</div>
+
+<!-- ═══════════════════════════════ MAP PAGE ═══════════════════════════════ -->
+<style>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="home-header">
+    <div class="campaign-label">2026 지방선거 캠프 운영 시스템</div>
+    <div class="home-title">선거<br><span>런닝메이트</span></div>
+    <div class="home-sub">역할을 선택하세요</div>
+  </div>
+
+  <div class="role-grid">
+    <div class="role-card leader" onclick="goto('leader')">
+      <span class="role-icon">🎙️</span>
+      <div class="role-name">후보 밀착</div>
+      <div class="role-desc">유세 포인트<br>예상 질문 대응</div>
+    </div>
+    <div class="role-card scout" onclick="goto('scout')">
+      <span class="role-icon">🗺️</span>
+      <div class="role-name">선발대</div>
+      <div class="role-desc">일정 확인<br>지역 이슈 브리핑</div>
+    </div>
+    <div class="role-card field" onclick="goto('field')">
+      <span class="role-icon">📡</span>
+      <div class="role-name">현장 수집</div>
+      <div class="role-desc">시민 반응<br>즉시 전송</div>
+    </div>
+    <div class="role-card hq" onclick="goto('hq')">
+      <span class="role-icon">📊</span>
+      <div class="role-name">본부</div>
+      <div class="role-desc">전체 현황<br>실시간 대시보드</div>
+    </div>
+    <div class="role-card" style="grid-column:span 2; border-color:rgba(39,174,96,0.6); background:rgba(39,174,96,0.06);" onclick="goto('map')">
+      <span class="role-icon">📍</span>
+      <div class="role-name">유세 지도</div>
+      <div class="role-desc">포인트별 접촉 기록 · 간편/상세 모드 · 엑셀 내보내기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MAP PAGE ═══════════════════════════════ -->
+<style>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="home-header">
+    <div class="campaign-label">2026 지방선거 캠프 운영 시스템</div>
+    <div class="home-title">선거<br><span>런닝메이트</span></div>
+    <div class="home-sub">역할을 선택하세요</div>
+  </div>
+
+  <div class="role-grid">
+    <div class="role-card leader" onclick="goto('leader')">
+      <span class="role-icon">🎙️</span>
+      <div class="role-name">후보 밀착</div>
+      <div class="role-desc">유세 포인트<br>예상 질문 대응</div>
+    </div>
+    <div class="role-card scout" onclick="goto('scout')">
+      <span class="role-icon">🗺️</span>
+      <div class="role-name">선발대</div>
+      <div class="role-desc">일정 확인<br>지역 이슈 브리핑</div>
+    </div>
+    <div class="role-card field" onclick="goto('field')">
+      <span class="role-icon">📡</span>
+      <div class="role-name">현장 수집</div>
+      <div class="role-desc">시민 반응<br>즉시 전송</div>
+    </div>
+    <div class="role-card hq" onclick="goto('hq')">
+      <span class="role-icon">📊</span>
+      <div class="role-name">본부</div>
+      <div class="role-desc">전체 현황<br>실시간 대시보드</div>
+    </div>
+    <div class="role-card" style="grid-column:span 2; border-color:rgba(39,174,96,0.6); background:rgba(39,174,96,0.06);" onclick="goto('map')">
+      <span class="role-icon">📍</span>
+      <div class="role-name">유세 지도</div>
+      <div class="role-desc">포인트별 접촉 기록 · 간편/상세 모드 · 엑셀 내보내기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ LEADER ═══════════════════════════════ -->
+<div id="leader" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">후보 밀착팀</div>
+      <div class="page-title">유세 포인트</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘의 핵심 메시지 -->
+    <div class="section-label">오늘의 핵심 메시지</div>
+    <div class="talking-point">
+      <div class="point-num">1</div>
+      <div>
+        <div class="point-text">도 대표의원 4년 경험 → 우리 지역구에 돌려드립니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">광역의회에서 쌓은 네트워크와 예산 집행 경험</div>
+        <span class="point-tag">재선 강점</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">2</div>
+      <div>
+        <div class="point-text">버스가 부족합니다 — 경기도 예산으로 바꿉니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">지역 교통 인프라 확충 — 경기도 예산으로 해결</div>
+        <span class="point-tag">생활 민원</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">3</div>
+      <div>
+        <div class="point-text">반도체·AI 시대, 수원이 중심이어야 합니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">미래산업 유치와 일자리 창출 — 이미 실행 중</div>
+        <span class="point-tag">미래 비전</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역별 맞춤 포인트 -->
+    <div class="section-label">지역별 맞춤 포인트</div>
+    <select class="loc-select" id="leader-loc" onchange="updateLeaderLoc()">
+      <option value="">— 현재 유세 지역 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="leader-loc-card" class="card" style="display:none">
+      <div class="card-title" id="leader-loc-title"></div>
+      <div class="card-body" id="leader-loc-body"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 예상 질문 -->
+    <div class="section-label">예상 질문 대응</div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "다른 후보와 뭐가 다른가요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">경기도의회 민주당 대표의원을 맡은 도의원은 수원에서 저 혼자입니다. 도지사·경기도 예산을 직접 다루는 자리에서 4년을 보냈습니다. 그 네트워크와 경험을 이제 우리 지역구에 쓸 차례입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "재선인데 그동안 뭘 했나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">전반기 보건복지위원장으로 장애인·취약계층 지원 예산을 직접 확대했고, 축산농가 지원 예산 증액, 전통식품 육성 조례를 통과시켰습니다. 지역을 위한 일보다 경기도 전체를 위한 싸움을 했습니다. 이제 그 경험을 우리 지역구에 집중할 때입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "교통 문제 언제 해결되나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">교통 문제는 기초의원이 아닌 광역의원이 경기도 예산으로 해결할 수 있습니다. 경기도 광역교통위원회 예산이 필요합니다. 도의원이 할 수 있는 일이고, 임기 시작 즉시 교통위에 올리겠습니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "민주당 정권인데 왜 아직도 해결 안 됐나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">지방 현안은 중앙 정부가 아니라 경기도의회와 지역구 의원이 직접 챙겨야 합니다. 도의회 대표의원으로서 더 빠르게 처리할 수 있는 구조를 만들었습니다. 이번 임기에는 우리 지역구만 집중해서 실결과를 보여드리겠습니다.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SCOUT ═══════════════════════════════ -->
+<div id="scout" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">선발대</div>
+      <div class="page-title">일정 & 지역 이슈</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘 일정 -->
+    <div class="section-label">오늘 일정 (6/3 화)</div>
+    <div class="schedule-list">
+      <div class="sched-item">
+        <div class="sched-time">09:00</div>
+        <div class="sched-dot done"></div>
+        <div class="sched-info">
+          <div class="sched-place">전통시장 입구</div>
+          <div class="sched-note">시장 상인회 대표 인사</div>
+        </div>
+        <div class="sched-status done">완료</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">10:30</div>
+        <div class="sched-dot now"></div>
+        <div class="sched-info">
+          <div class="sched-place">주민센터 앞</div>
+          <div class="sched-note">현수막 설치 확인 필요 · 주차 협소</div>
+        </div>
+        <div class="sched-status now">진행중</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">13:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">아파트 단지 앞</div>
+          <div class="sched-note">입주민 민원 집중 지역 — 교통 이슈</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">15:30</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">행정복지센터</div>
+          <div class="sched-note">신청사 건축 관련 주민 간담회 직후</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">18:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">먹자골목</div>
+          <div class="sched-note">저녁 유동인구 집중 유세</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역 이슈 브리핑 -->
+    <div class="section-label">지역 이슈 브리핑</div>
+    <select class="loc-select" id="scout-loc" onchange="updateScoutLoc()">
+      <option value="">— 다음 장소 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="scout-issues" style="display:none">
+      <div class="card">
+        <div class="card-title" id="scout-loc-name">이슈</div>
+        <div id="scout-chips"></div>
+        <div class="divider" style="margin: 0.8rem 0;"></div>
+        <div class="card-body" id="scout-brief"></div>
+      </div>
+
+      <div class="card" style="margin-top: 0.8rem;">
+        <div class="card-title">⚡ 선발대 체크리스트</div>
+        <div class="card-body" id="scout-checklist"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FIELD ═══════════════════════════════ -->
+<div id="field" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">현장 수집</div>
+      <div class="page-title">시민 반응 전송</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+    <div class="field-hero">
+      <div class="field-location">현재 위치</div>
+      <select class="loc-select" id="field-loc-select" style="text-align:center; margin-bottom:0.3rem">
+        <option>지역1</option>
+        <option>지역2</option>
+        <option>지역3</option>
+        <option>지역4</option>
+        <option>지역5</option>
+      </select>
+      <div class="field-time" id="field-time"></div>
+    </div>
+
+    <!-- 반응 버튼 3개 -->
+    <div class="section-label" style="text-align:center">시민 반응</div>
+    <div class="reaction-grid">
+      <button class="react-btn positive" onclick="pressReact(this, 'pos')">
+        <span class="react-emoji">👍</span>
+        <div class="react-label">긍정</div>
+        <div class="react-count" id="cnt-pos">0</div>
+      </button>
+      <button class="react-btn negative" onclick="pressReact(this, 'neg')">
+        <span class="react-emoji">👎</span>
+        <div class="react-label">부정</div>
+        <div class="react-count" id="cnt-neg">0</div>
+      </button>
+      <button class="react-btn question" onclick="pressReact(this, 'qst')">
+        <span class="react-emoji">❓</span>
+        <div class="react-label">질문</div>
+        <div class="react-count" id="cnt-qst">0</div>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 메모 -->
+    <div class="section-label">현장 메모 (선택)</div>
+    <textarea class="memo-area" id="field-memo" placeholder="시민이 한 말, 주요 질문 내용, 특이사항 등..."></textarea>
+    <button class="submit-btn" onclick="submitField()">📤 본부로 전송</button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ HQ ═══════════════════════════════ -->
+<div id="hq" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">본부</div>
+      <div class="page-title">실시간 대시보드</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 통계 -->
+    <div class="section-label">오늘 현황</div>
+    <div class="hq-grid">
+      <div class="stat-card">
+        <div class="stat-label">긍정 반응</div>
+        <div class="stat-num green" id="hq-pos">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar green" id="bar-pos" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">부정 반응</div>
+        <div class="stat-num red" id="hq-neg">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar red" id="bar-neg" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">질문 건수</div>
+        <div class="stat-num orange" id="hq-qst">0</div>
+        <div class="stat-sub">대응 필요</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">총 접촉</div>
+        <div class="stat-num gold" id="hq-total">0</div>
+        <div class="stat-sub">명</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 실시간 피드 -->
+    <div class="section-label">실시간 현장 피드</div>
+    <div id="hq-feed">
+      <div class="feed-item" style="color:var(--gray); font-size:0.78rem; justify-content:center; padding: 1.5rem 0;">
+        현장 수집 데이터를 기다리는 중...
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 수행원 현황 -->
+    <div class="section-label">수행원 현황</div>
+    <div id="member-list">
+      <div class="member-row">
+        <div class="member-avatar">김</div>
+        <div>
+          <div class="member-name">김○○</div>
+          <div class="member-role">후보 밀착 · 지역1</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">이</div>
+        <div>
+          <div class="member-name">이○○</div>
+          <div class="member-role">선발대 · 권선1동</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">박</div>
+        <div>
+          <div class="member-name">박○○</div>
+          <div class="member-role">현장 수집 · 지역3</div>
+        </div>
+        <div class="member-status standby">대기중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">최</div>
+        <div>
+          <div class="member-name">최○○</div>
+          <div class="member-role">현장 수집 · 지역4</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">정</div>
+        <div>
+          <div class="member-name">정○○</div>
+          <div class="member-role">선발대 · 지역5 준비중</div>
+        </div>
+        <div class="member-status standby">이동중</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 수행원 이름 입력 모달 ── -->
+<div id="name-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;">
+  <div style="
+    background:#fff; border-radius:16px; padding:2rem 1.8rem;
+    width:min(340px, 90vw); box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:0.4rem">👤 수행원 확인</div>
+    <div style="font-size:0.9rem;color:#6b7280;margin-bottom:1.2rem">이름을 입력하면 다음부터 자동으로 사용돼요</div>
+    <input id="name-input" type="text" placeholder="예: 김철수"
+      style="width:100%;padding:0.85rem 1rem;border:2px solid #d1d5db;
+      border-radius:10px;font-size:1rem;font-family:'Noto Sans KR',sans-serif;
+      outline:none;margin-bottom:1rem;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter') confirmName()">
+    <button onclick="confirmName()" style="
+      width:100%;padding:0.9rem;background:#1d4ed8;color:#fff;
+      border:none;border-radius:10px;font-size:1rem;font-weight:700;
+      font-family:'Noto Sans KR',sans-serif;cursor:pointer;">
+      확인
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ 본부에 전송되었습니다</div>
+
+<!-- ═══════════════════════════════ MAP PAGE ═══════════════════════════════ -->
+<style>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="home-header">
+    <div class="campaign-label">2026 지방선거 캠프 운영 시스템</div>
+    <div class="home-title">선거<br><span>런닝메이트</span></div>
+    <div class="home-sub">역할을 선택하세요</div>
+  </div>
+
+  <div class="role-grid">
+    <div class="role-card leader" onclick="goto('leader')">
+      <span class="role-icon">🎙️</span>
+      <div class="role-name">후보 밀착</div>
+      <div class="role-desc">유세 포인트<br>예상 질문 대응</div>
+    </div>
+    <div class="role-card scout" onclick="goto('scout')">
+      <span class="role-icon">🗺️</span>
+      <div class="role-name">선발대</div>
+      <div class="role-desc">일정 확인<br>지역 이슈 브리핑</div>
+    </div>
+    <div class="role-card field" onclick="goto('field')">
+      <span class="role-icon">📡</span>
+      <div class="role-name">현장 수집</div>
+      <div class="role-desc">시민 반응<br>즉시 전송</div>
+    </div>
+    <div class="role-card hq" onclick="goto('hq')">
+      <span class="role-icon">📊</span>
+      <div class="role-name">본부</div>
+      <div class="role-desc">전체 현황<br>실시간 대시보드</div>
+    </div>
+    <div class="role-card" style="grid-column:span 2; border-color:rgba(39,174,96,0.6); background:rgba(39,174,96,0.06);" onclick="goto('map')">
+      <span class="role-icon">📍</span>
+      <div class="role-name">유세 지도</div>
+      <div class="role-desc">포인트별 접촉 기록 · 간편/상세 모드 · 엑셀 내보내기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ LEADER ═══════════════════════════════ -->
+<div id="leader" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">후보 밀착팀</div>
+      <div class="page-title">유세 포인트</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘의 핵심 메시지 -->
+    <div class="section-label">오늘의 핵심 메시지</div>
+    <div class="talking-point">
+      <div class="point-num">1</div>
+      <div>
+        <div class="point-text">도 대표의원 4년 경험 → 우리 지역구에 돌려드립니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">광역의회에서 쌓은 네트워크와 예산 집행 경험</div>
+        <span class="point-tag">재선 강점</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">2</div>
+      <div>
+        <div class="point-text">버스가 부족합니다 — 경기도 예산으로 바꿉니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">지역 교통 인프라 확충 — 경기도 예산으로 해결</div>
+        <span class="point-tag">생활 민원</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">3</div>
+      <div>
+        <div class="point-text">반도체·AI 시대, 수원이 중심이어야 합니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">미래산업 유치와 일자리 창출 — 이미 실행 중</div>
+        <span class="point-tag">미래 비전</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역별 맞춤 포인트 -->
+    <div class="section-label">지역별 맞춤 포인트</div>
+    <select class="loc-select" id="leader-loc" onchange="updateLeaderLoc()">
+      <option value="">— 현재 유세 지역 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="leader-loc-card" class="card" style="display:none">
+      <div class="card-title" id="leader-loc-title"></div>
+      <div class="card-body" id="leader-loc-body"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 예상 질문 -->
+    <div class="section-label">예상 질문 대응</div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "다른 후보와 뭐가 다른가요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">경기도의회 민주당 대표의원을 맡은 도의원은 수원에서 저 혼자입니다. 도지사·경기도 예산을 직접 다루는 자리에서 4년을 보냈습니다. 그 네트워크와 경험을 이제 우리 지역구에 쓸 차례입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "재선인데 그동안 뭘 했나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">전반기 보건복지위원장으로 장애인·취약계층 지원 예산을 직접 확대했고, 축산농가 지원 예산 증액, 전통식품 육성 조례를 통과시켰습니다. 지역을 위한 일보다 경기도 전체를 위한 싸움을 했습니다. 이제 그 경험을 우리 지역구에 집중할 때입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "교통 문제 언제 해결되나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">교통 문제는 기초의원이 아닌 광역의원이 경기도 예산으로 해결할 수 있습니다. 경기도 광역교통위원회 예산이 필요합니다. 도의원이 할 수 있는 일이고, 임기 시작 즉시 교통위에 올리겠습니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "민주당 정권인데 왜 아직도 해결 안 됐나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">지방 현안은 중앙 정부가 아니라 경기도의회와 지역구 의원이 직접 챙겨야 합니다. 도의회 대표의원으로서 더 빠르게 처리할 수 있는 구조를 만들었습니다. 이번 임기에는 우리 지역구만 집중해서 실결과를 보여드리겠습니다.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SCOUT ═══════════════════════════════ -->
+<div id="scout" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">선발대</div>
+      <div class="page-title">일정 & 지역 이슈</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘 일정 -->
+    <div class="section-label">오늘 일정 (6/3 화)</div>
+    <div class="schedule-list">
+      <div class="sched-item">
+        <div class="sched-time">09:00</div>
+        <div class="sched-dot done"></div>
+        <div class="sched-info">
+          <div class="sched-place">전통시장 입구</div>
+          <div class="sched-note">시장 상인회 대표 인사</div>
+        </div>
+        <div class="sched-status done">완료</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">10:30</div>
+        <div class="sched-dot now"></div>
+        <div class="sched-info">
+          <div class="sched-place">주민센터 앞</div>
+          <div class="sched-note">현수막 설치 확인 필요 · 주차 협소</div>
+        </div>
+        <div class="sched-status now">진행중</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">13:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">아파트 단지 앞</div>
+          <div class="sched-note">입주민 민원 집중 지역 — 교통 이슈</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">15:30</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">행정복지센터</div>
+          <div class="sched-note">신청사 건축 관련 주민 간담회 직후</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">18:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">먹자골목</div>
+          <div class="sched-note">저녁 유동인구 집중 유세</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역 이슈 브리핑 -->
+    <div class="section-label">지역 이슈 브리핑</div>
+    <select class="loc-select" id="scout-loc" onchange="updateScoutLoc()">
+      <option value="">— 다음 장소 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="scout-issues" style="display:none">
+      <div class="card">
+        <div class="card-title" id="scout-loc-name">이슈</div>
+        <div id="scout-chips"></div>
+        <div class="divider" style="margin: 0.8rem 0;"></div>
+        <div class="card-body" id="scout-brief"></div>
+      </div>
+
+      <div class="card" style="margin-top: 0.8rem;">
+        <div class="card-title">⚡ 선발대 체크리스트</div>
+        <div class="card-body" id="scout-checklist"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FIELD ═══════════════════════════════ -->
+<div id="field" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">현장 수집</div>
+      <div class="page-title">시민 반응 전송</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+    <div class="field-hero">
+      <div class="field-location">현재 위치</div>
+      <select class="loc-select" id="field-loc-select" style="text-align:center; margin-bottom:0.3rem">
+        <option>지역1</option>
+        <option>지역2</option>
+        <option>지역3</option>
+        <option>지역4</option>
+        <option>지역5</option>
+      </select>
+      <div class="field-time" id="field-time"></div>
+    </div>
+
+    <!-- 반응 버튼 3개 -->
+    <div class="section-label" style="text-align:center">시민 반응</div>
+    <div class="reaction-grid">
+      <button class="react-btn positive" onclick="pressReact(this, 'pos')">
+        <span class="react-emoji">👍</span>
+        <div class="react-label">긍정</div>
+        <div class="react-count" id="cnt-pos">0</div>
+      </button>
+      <button class="react-btn negative" onclick="pressReact(this, 'neg')">
+        <span class="react-emoji">👎</span>
+        <div class="react-label">부정</div>
+        <div class="react-count" id="cnt-neg">0</div>
+      </button>
+      <button class="react-btn question" onclick="pressReact(this, 'qst')">
+        <span class="react-emoji">❓</span>
+        <div class="react-label">질문</div>
+        <div class="react-count" id="cnt-qst">0</div>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 메모 -->
+    <div class="section-label">현장 메모 (선택)</div>
+    <textarea class="memo-area" id="field-memo" placeholder="시민이 한 말, 주요 질문 내용, 특이사항 등..."></textarea>
+    <button class="submit-btn" onclick="submitField()">📤 본부로 전송</button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ HQ ═══════════════════════════════ -->
+<div id="hq" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">본부</div>
+      <div class="page-title">실시간 대시보드</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 통계 -->
+    <div class="section-label">오늘 현황</div>
+    <div class="hq-grid">
+      <div class="stat-card">
+        <div class="stat-label">긍정 반응</div>
+        <div class="stat-num green" id="hq-pos">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar green" id="bar-pos" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">부정 반응</div>
+        <div class="stat-num red" id="hq-neg">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar red" id="bar-neg" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">질문 건수</div>
+        <div class="stat-num orange" id="hq-qst">0</div>
+        <div class="stat-sub">대응 필요</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">총 접촉</div>
+        <div class="stat-num gold" id="hq-total">0</div>
+        <div class="stat-sub">명</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 실시간 피드 -->
+    <div class="section-label">실시간 현장 피드</div>
+    <div id="hq-feed">
+      <div class="feed-item" style="color:var(--gray); font-size:0.78rem; justify-content:center; padding: 1.5rem 0;">
+        현장 수집 데이터를 기다리는 중...
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 수행원 현황 -->
+    <div class="section-label">수행원 현황</div>
+    <div id="member-list">
+      <div class="member-row">
+        <div class="member-avatar">김</div>
+        <div>
+          <div class="member-name">김○○</div>
+          <div class="member-role">후보 밀착 · 지역1</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">이</div>
+        <div>
+          <div class="member-name">이○○</div>
+          <div class="member-role">선발대 · 권선1동</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">박</div>
+        <div>
+          <div class="member-name">박○○</div>
+          <div class="member-role">현장 수집 · 지역3</div>
+        </div>
+        <div class="member-status standby">대기중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">최</div>
+        <div>
+          <div class="member-name">최○○</div>
+          <div class="member-role">현장 수집 · 지역4</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">정</div>
+        <div>
+          <div class="member-name">정○○</div>
+          <div class="member-role">선발대 · 지역5 준비중</div>
+        </div>
+        <div class="member-status standby">이동중</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 수행원 이름 입력 모달 ── -->
+<div id="name-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;">
+  <div style="
+    background:#fff; border-radius:16px; padding:2rem 1.8rem;
+    width:min(340px, 90vw); box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:0.4rem">👤 수행원 확인</div>
+    <div style="font-size:0.9rem;color:#6b7280;margin-bottom:1.2rem">이름을 입력하면 다음부터 자동으로 사용돼요</div>
+    <input id="name-input" type="text" placeholder="예: 김철수"
+      style="width:100%;padding:0.85rem 1rem;border:2px solid #d1d5db;
+      border-radius:10px;font-size:1rem;font-family:'Noto Sans KR',sans-serif;
+      outline:none;margin-bottom:1rem;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter') confirmName()">
+    <button onclick="confirmName()" style="
+      width:100%;padding:0.9rem;background:#1d4ed8;color:#fff;
+      border:none;border-radius:10px;font-size:1rem;font-weight:700;
+      font-family:'Noto Sans KR',sans-serif;cursor:pointer;">
+      확인
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ 본부에 전송되었습니다</div>
+
+<!-- ═══════════════════════════════ MAP PAGE ═══════════════════════════════ -->
+<style>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="home-header">
+    <div class="campaign-label">2026 지방선거 캠프 운영 시스템</div>
+    <div class="home-title">선거<br><span>런닝메이트</span></div>
+    <div class="home-sub">역할을 선택하세요</div>
+  </div>
+
+  <div class="role-grid">
+    <div class="role-card leader" onclick="goto('leader')">
+      <span class="role-icon">🎙️</span>
+      <div class="role-name">후보 밀착</div>
+      <div class="role-desc">유세 포인트<br>예상 질문 대응</div>
+    </div>
+    <div class="role-card scout" onclick="goto('scout')">
+      <span class="role-icon">🗺️</span>
+      <div class="role-name">선발대</div>
+      <div class="role-desc">일정 확인<br>지역 이슈 브리핑</div>
+    </div>
+    <div class="role-card field" onclick="goto('field')">
+      <span class="role-icon">📡</span>
+      <div class="role-name">현장 수집</div>
+      <div class="role-desc">시민 반응<br>즉시 전송</div>
+    </div>
+    <div class="role-card hq" onclick="goto('hq')">
+      <span class="role-icon">📊</span>
+      <div class="role-name">본부</div>
+      <div class="role-desc">전체 현황<br>실시간 대시보드</div>
+    </div>
+    <div class="role-card" style="grid-column:span 2; border-color:rgba(39,174,96,0.6); background:rgba(39,174,96,0.06);" onclick="goto('map')">
+      <span class="role-icon">📍</span>
+      <div class="role-name">유세 지도</div>
+      <div class="role-desc">포인트별 접촉 기록 · 간편/상세 모드 · 엑셀 내보내기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ LEADER ═══════════════════════════════ -->
+<div id="leader" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">후보 밀착팀</div>
+      <div class="page-title">유세 포인트</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘의 핵심 메시지 -->
+    <div class="section-label">오늘의 핵심 메시지</div>
+    <div class="talking-point">
+      <div class="point-num">1</div>
+      <div>
+        <div class="point-text">도 대표의원 4년 경험 → 우리 지역구에 돌려드립니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">광역의회에서 쌓은 네트워크와 예산 집행 경험</div>
+        <span class="point-tag">재선 강점</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">2</div>
+      <div>
+        <div class="point-text">버스가 부족합니다 — 경기도 예산으로 바꿉니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">지역 교통 인프라 확충 — 경기도 예산으로 해결</div>
+        <span class="point-tag">생활 민원</span>
+      </div>
+    </div>
+    <div class="talking-point">
+      <div class="point-num">3</div>
+      <div>
+        <div class="point-text">반도체·AI 시대, 수원이 중심이어야 합니다</div>
+        <div style="font-size:0.85rem;color:var(--L-text2);margin-top:0.4rem;line-height:1.6">미래산업 유치와 일자리 창출 — 이미 실행 중</div>
+        <span class="point-tag">미래 비전</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역별 맞춤 포인트 -->
+    <div class="section-label">지역별 맞춤 포인트</div>
+    <select class="loc-select" id="leader-loc" onchange="updateLeaderLoc()">
+      <option value="">— 현재 유세 지역 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="leader-loc-card" class="card" style="display:none">
+      <div class="card-title" id="leader-loc-title"></div>
+      <div class="card-body" id="leader-loc-body"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 예상 질문 -->
+    <div class="section-label">예상 질문 대응</div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "다른 후보와 뭐가 다른가요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">경기도의회 민주당 대표의원을 맡은 도의원은 수원에서 저 혼자입니다. 도지사·경기도 예산을 직접 다루는 자리에서 4년을 보냈습니다. 그 네트워크와 경험을 이제 우리 지역구에 쓸 차례입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "재선인데 그동안 뭘 했나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">전반기 보건복지위원장으로 장애인·취약계층 지원 예산을 직접 확대했고, 축산농가 지원 예산 증액, 전통식품 육성 조례를 통과시켰습니다. 지역을 위한 일보다 경기도 전체를 위한 싸움을 했습니다. 이제 그 경험을 우리 지역구에 집중할 때입니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "교통 문제 언제 해결되나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">교통 문제는 기초의원이 아닌 광역의원이 경기도 예산으로 해결할 수 있습니다. 경기도 광역교통위원회 예산이 필요합니다. 도의원이 할 수 있는 일이고, 임기 시작 즉시 교통위에 올리겠습니다.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        "민주당 정권인데 왜 아직도 해결 안 됐나요?"
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">지방 현안은 중앙 정부가 아니라 경기도의회와 지역구 의원이 직접 챙겨야 합니다. 도의회 대표의원으로서 더 빠르게 처리할 수 있는 구조를 만들었습니다. 이번 임기에는 우리 지역구만 집중해서 실결과를 보여드리겠습니다.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SCOUT ═══════════════════════════════ -->
+<div id="scout" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">선발대</div>
+      <div class="page-title">일정 & 지역 이슈</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 오늘 일정 -->
+    <div class="section-label">오늘 일정 (6/3 화)</div>
+    <div class="schedule-list">
+      <div class="sched-item">
+        <div class="sched-time">09:00</div>
+        <div class="sched-dot done"></div>
+        <div class="sched-info">
+          <div class="sched-place">전통시장 입구</div>
+          <div class="sched-note">시장 상인회 대표 인사</div>
+        </div>
+        <div class="sched-status done">완료</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">10:30</div>
+        <div class="sched-dot now"></div>
+        <div class="sched-info">
+          <div class="sched-place">주민센터 앞</div>
+          <div class="sched-note">현수막 설치 확인 필요 · 주차 협소</div>
+        </div>
+        <div class="sched-status now">진행중</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">13:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">아파트 단지 앞</div>
+          <div class="sched-note">입주민 민원 집중 지역 — 교통 이슈</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">15:30</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">행정복지센터</div>
+          <div class="sched-note">신청사 건축 관련 주민 간담회 직후</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-time">18:00</div>
+        <div class="sched-dot next"></div>
+        <div class="sched-info">
+          <div class="sched-place">먹자골목</div>
+          <div class="sched-note">저녁 유동인구 집중 유세</div>
+        </div>
+        <div class="sched-status next">대기</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 지역 이슈 브리핑 -->
+    <div class="section-label">지역 이슈 브리핑</div>
+    <select class="loc-select" id="scout-loc" onchange="updateScoutLoc()">
+      <option value="">— 다음 장소 선택 —</option>
+      <option value="지역1">지역1</option>
+      <option value="지역2">지역2</option>
+      <option value="지역3">지역3</option>
+      <option value="지역4">지역4</option>
+      <option value="지역5">지역5</option>
+    </select>
+
+    <div id="scout-issues" style="display:none">
+      <div class="card">
+        <div class="card-title" id="scout-loc-name">이슈</div>
+        <div id="scout-chips"></div>
+        <div class="divider" style="margin: 0.8rem 0;"></div>
+        <div class="card-body" id="scout-brief"></div>
+      </div>
+
+      <div class="card" style="margin-top: 0.8rem;">
+        <div class="card-title">⚡ 선발대 체크리스트</div>
+        <div class="card-body" id="scout-checklist"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FIELD ═══════════════════════════════ -->
+<div id="field" class="page page-light">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">현장 수집</div>
+      <div class="page-title">시민 반응 전송</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+    <div class="field-hero">
+      <div class="field-location">현재 위치</div>
+      <select class="loc-select" id="field-loc-select" style="text-align:center; margin-bottom:0.3rem">
+        <option>지역1</option>
+        <option>지역2</option>
+        <option>지역3</option>
+        <option>지역4</option>
+        <option>지역5</option>
+      </select>
+      <div class="field-time" id="field-time"></div>
+    </div>
+
+    <!-- 반응 버튼 3개 -->
+    <div class="section-label" style="text-align:center">시민 반응</div>
+    <div class="reaction-grid">
+      <button class="react-btn positive" onclick="pressReact(this, 'pos')">
+        <span class="react-emoji">👍</span>
+        <div class="react-label">긍정</div>
+        <div class="react-count" id="cnt-pos">0</div>
+      </button>
+      <button class="react-btn negative" onclick="pressReact(this, 'neg')">
+        <span class="react-emoji">👎</span>
+        <div class="react-label">부정</div>
+        <div class="react-count" id="cnt-neg">0</div>
+      </button>
+      <button class="react-btn question" onclick="pressReact(this, 'qst')">
+        <span class="react-emoji">❓</span>
+        <div class="react-label">질문</div>
+        <div class="react-count" id="cnt-qst">0</div>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 메모 -->
+    <div class="section-label">현장 메모 (선택)</div>
+    <textarea class="memo-area" id="field-memo" placeholder="시민이 한 말, 주요 질문 내용, 특이사항 등..."></textarea>
+    <button class="submit-btn" onclick="submitField()">📤 본부로 전송</button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ HQ ═══════════════════════════════ -->
+<div id="hq" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goto('home')">← 홈</button>
+    <div class="page-title-wrap">
+      <div class="page-role-badge">본부</div>
+      <div class="page-title">실시간 대시보드</div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- 통계 -->
+    <div class="section-label">오늘 현황</div>
+    <div class="hq-grid">
+      <div class="stat-card">
+        <div class="stat-label">긍정 반응</div>
+        <div class="stat-num green" id="hq-pos">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar green" id="bar-pos" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">부정 반응</div>
+        <div class="stat-num red" id="hq-neg">0</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar red" id="bar-neg" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">질문 건수</div>
+        <div class="stat-num orange" id="hq-qst">0</div>
+        <div class="stat-sub">대응 필요</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">총 접촉</div>
+        <div class="stat-num gold" id="hq-total">0</div>
+        <div class="stat-sub">명</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 실시간 피드 -->
+    <div class="section-label">실시간 현장 피드</div>
+    <div id="hq-feed">
+      <div class="feed-item" style="color:var(--gray); font-size:0.78rem; justify-content:center; padding: 1.5rem 0;">
+        현장 수집 데이터를 기다리는 중...
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 수행원 현황 -->
+    <div class="section-label">수행원 현황</div>
+    <div id="member-list">
+      <div class="member-row">
+        <div class="member-avatar">김</div>
+        <div>
+          <div class="member-name">김○○</div>
+          <div class="member-role">후보 밀착 · 지역1</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">이</div>
+        <div>
+          <div class="member-name">이○○</div>
+          <div class="member-role">선발대 · 권선1동</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">박</div>
+        <div>
+          <div class="member-name">박○○</div>
+          <div class="member-role">현장 수집 · 지역3</div>
+        </div>
+        <div class="member-status standby">대기중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">최</div>
+        <div>
+          <div class="member-name">최○○</div>
+          <div class="member-role">현장 수집 · 지역4</div>
+        </div>
+        <div class="member-status active">활동중</div>
+      </div>
+      <div class="member-row">
+        <div class="member-avatar">정</div>
+        <div>
+          <div class="member-name">정○○</div>
+          <div class="member-role">선발대 · 지역5 준비중</div>
+        </div>
+        <div class="member-status standby">이동중</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 수행원 이름 입력 모달 ── -->
+<div id="name-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;">
+  <div style="
+    background:#fff; border-radius:16px; padding:2rem 1.8rem;
+    width:min(340px, 90vw); box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:0.4rem">👤 수행원 확인</div>
+    <div style="font-size:0.9rem;color:#6b7280;margin-bottom:1.2rem">이름을 입력하면 다음부터 자동으로 사용돼요</div>
+    <input id="name-input" type="text" placeholder="예: 김철수"
+      style="width:100%;padding:0.85rem 1rem;border:2px solid #d1d5db;
+      border-radius:10px;font-size:1rem;font-family:'Noto Sans KR',sans-serif;
+      outline:none;margin-bottom:1rem;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter') confirmName()">
+    <button onclick="confirmName()" style="
+      width:100%;padding:0.9rem;background:#1d4ed8;color:#fff;
+      border:none;border-radius:10px;font-size:1rem;font-weight:700;
+      font-family:'Noto Sans KR',sans-serif;cursor:pointer;">
+      확인
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ 본부에 전송되었습니다</div>
+
+<!-- ═══════════════════════════════ MAP PAGE ═══════════════════════════════ -->
+<style>
+</style>
+
+
+<!-- ═══════════════════════════════ MAP (iframe) ═══════════════════════════════ -->
+<div id="map" class="page" style="flex-direction:column; height:100vh;">
+  <div style="
+    display:flex; align-items:center; gap:0.8rem;
+    padding:0.8rem 1.2rem;
+    background:#fff; border-bottom:1px solid #e5e7eb;
+    position:sticky; top:0; z-index:100;
+    flex-shrink:0;
+  ">
+    <button onclick="goto('home')" style="
+      padding:0.5rem 1rem;
+      background:#f3f4f6; border:none; border-radius:8px;
+      font-family:'Noto Sans KR',sans-serif;
+      font-size:0.9rem; font-weight:600;
+      color:#374151; cursor:pointer;
+    ">← 홈</button>
+    <span style="font-size:1rem; font-weight:700; color:#111827;">유세 지도</span>
+  </div>
+  <iframe
+    id="map-iframe"
+    src="seonrunmate-map.html"
+    style="flex:1; border:none; width:100%; height:100%;"
+    allow="fullscreen"
+  ></iframe>
+</div>
+
+
+<script>
+  // ── 페이지 전환 ──
+  function goto(id) {
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    const target = document.getElementById(id === 'map' ? 'map-page' : id);
+    target.style.display = 'flex';
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ── 시간 ──
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const el = document.getElementById('field-time');
+    if(el) el.textContent = `현재 시각 ${h}:${m}`;
+  }
+  setInterval(updateTime, 10000);
+  updateTime();
+
+  // ── QA 토글 ──
+  function toggleQA(el) {
+    el.parentElement.classList.toggle('open');
+  }
+
+  // ── 지역별 데이터 ──
+  const locData = {
+    '호매실': {
+      issues: ['광역버스 부족🔥', '학원가 교통', '신축 아파트 주차', '청소년 공간'],
+      hot: ['광역버스 부족🔥'],
+      brief: '호매실지구는 입주 완료 후에도 광역버스 노선 증편이 해결되지 않아 출퇴근 민심이 매우 좋지 않습니다. "버스가 왜 아직도 이렇냐"는 반응이 가장 많습니다. 청소년 문화공간 부재도 30~40대 학부모들에게 반응이 큽니다.',
+      checklist: '• 광역버스 민원 반응 특히 주시\n• "도의원이 경기도 예산으로 해결" 메시지 강조\n• 신축 아파트 앞 유세 효과적\n• 현수막 설치 위치: 호매실로 메인 교차로'
+    },
+    '권선': {
+      issues: ['구도심 낙후', '보행로 정비', '노인 복지', '상가 공실'],
+      hot: ['구도심 낙후'],
+      brief: '권선동은 구도심 지역으로 상대적으로 고령 인구 비율이 높습니다. 도로·보행환경 개선 민원이 많고, 노인 돌봄 서비스 확대 요구가 강합니다. 장애인복지단체 이력을 강조하면 효과적입니다.',
+      checklist: '• 경로당·복지관 근처 유세 집중\n• 복지위원장 이력 적극 언급\n• 보행로 정비 공약 현장 연결\n• 유세 시간: 오전 10시~11시 효과적'
+    },
+    '세류': {
+      issues: ['행복센터 신축', '주거환경', '주차 문제', '소상공인'],
+      hot: ['행복센터 신축'],
+      brief: '세류3동 행정복지센터 신청사 건축이 현재 진행 중인 최대 현안입니다. 도의원이 경기도 예산 확보에 기여할 수 있다는 점을 어필하기 좋은 지역입니다. 소상공인 밀집 지역이므로 민생경제 공약도 유효합니다.',
+      checklist: '• 세류3동 신청사 건축 현황 파악 후 방문\n• "도의원이 예산 뒷받침" 메시지\n• 소상공인 AI·디지털 지원 공약 언급\n• 행복센터 방문 시간 간담회 전후 노릴 것'
+    },
+    '곡선': {
+      issues: ['신도시 입주민', '도로 포장', '학교 과밀', '주차장'],
+      hot: ['학교 과밀'],
+      brief: '곡선동은 신규 입주 아파트가 많아 3040 세대 비율이 높습니다. 곡정고·규장초 인근 도로환경 민원이 최근 처리된 바 있어 구청 행정에 관심이 높습니다. 학교 과밀학급 해소가 이 지역 핵심 관심사입니다.',
+      checklist: '• 초등학교 등하교 시간대 유세 효과\n• 학부모 타깃: 교육 공약 전면 강조\n• 도로공사 완료 구간 현장 사진 활용\n• 아파트 단지 입구 집중 배치'
+    },
+    '구운': {
+      issues: ['먹자골목 상권', '주차', '청년 유동인구', '야간 안전'],
+      hot: ['먹자골목 상권'],
+      brief: '구운동 먹자골목은 저녁 유동인구가 많은 상업지역입니다. 소상공인과 청년 상인들이 많아 민생경제·창업 지원 공약이 잘 먹힙니다. 야간 유세 적합 지역이며 비교적 젊은 유권자 비중이 높습니다.',
+      checklist: '• 저녁 6시 이후 유세 황금시간대\n• 소상공인 간담회 제안 효과적\n• AI·창업 지원 공약 앞세우기\n• 안전·CCTV 관련 공약도 반응 좋음'
+    }
+  };
+
+  async function updateLeaderLoc() {
+    const val = document.getElementById('leader-loc').value;
+    const card = document.getElementById('leader-loc-card');
+    if (!val) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('leader-loc-title').textContent = '📍 ' + val + ' — 로딩 중...';
+    document.getElementById('leader-loc-body').textContent = '';
+    try {
+      const pledges = await window.getPledgesByLocation(val);
+      document.getElementById('leader-loc-title').textContent = '📍 ' + val + ' — 공약 ' + pledges.length + '개';
+      document.getElementById('leader-loc-body').innerHTML = pledges.length === 0
+        ? '등록된 공약이 없습니다.'
+        : pledges.map(function(p) {
+            return '<div style="margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid #e5e7eb">' +
+              '<div style="font-weight:700;color:#1a3a6e;margin-bottom:0.2rem">[' + p['분야'] + '] ' + p['공약 제목'] + '</div>' +
+              '<div style="line-height:1.7">' + p['공약 내용 (유세 멘트)'] + '</div>' +
+              (p['강조 키워드'] ? '<div style="margin-top:0.3rem;font-size:0.82rem;color:#2563eb">🔑 ' + p['강조 키워드'] + '</div>' : '') +
+              '</div>';
+          }).join('');
+    } catch(e) {
+      document.getElementById('leader-loc-body').textContent = '공약 로드 실패.';
+    }
+  }
+
+  function updateScoutLoc() {
+    const val = document.getElementById('scout-loc').value;
+    const wrap = document.getElementById('scout-issues');
+    if (!val) { wrap.style.display = 'none'; return; }
+    const d = locData[val];
+    document.getElementById('scout-loc-name').textContent = `📍 ${val} 주요 이슈`;
+
+    const chips = document.getElementById('scout-chips');
+    chips.innerHTML = d.issues.map(i =>
+      `<span class="issue-chip${d.hot.includes(i) ? ' hot' : ''}">${i}</span>`
+    ).join('');
+
+    document.getElementById('scout-brief').textContent = d.brief;
+    document.getElementById('scout-checklist').innerHTML =
+      d.checklist.split('\n').map(l => `<div style="margin-bottom:0.4rem">${l}</div>`).join('');
+
+    wrap.style.display = 'block';
+  }
+
+  // ── 현장 수집 ──
+  let counts = { pos: 0, neg: 0, qst: 0 };
+  let feedItems = [];
+
+  function pressReact(btn, type) {
+    counts[type]++;
+    document.getElementById('cnt-' + type).textContent = counts[type];
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 300);
+    updateHQ();
+  }
+
+  function submitField() {
+    const memo = document.getElementById('field-memo').value.trim();
+    const loc  = document.getElementById('field-loc-select').value;
+    const now  = new Date();
+    const t    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    // 반응 요약 피드
+    if (counts.pos + counts.neg + counts.qst > 0) {
+      feedItems.unshift({
+        type: counts.pos >= counts.neg ? 'pos' : 'neg',
+        text: `긍정 ${counts.pos} / 부정 ${counts.neg} / 질문 ${counts.qst}건`,
+        loc, time: t
+      });
+    }
+    if (memo) {
+      feedItems.unshift({ type: 'qst', text: memo, loc, time: t });
+    }
+
+    renderFeed();
+    showToast();
+
+    // 리셋
+    counts = { pos: 0, neg: 0, qst: 0 };
+    ['pos','neg','qst'].forEach(k => document.getElementById('cnt-' + k).textContent = '0');
+    document.getElementById('field-memo').value = '';
+    updateHQ();
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById('hq-feed');
+    if (!feedItems.length) return;
+    feed.innerHTML = feedItems.slice(0, 15).map(f => `
+      <div class="feed-item">
+        <div class="feed-badge ${f.type}">${f.type==='pos'?'👍':f.type==='neg'?'👎':'❓'}</div>
+        <div>
+          <div class="feed-text">${f.text}</div>
+          <div class="feed-loc">📍 ${f.loc}</div>
+        </div>
+        <div class="feed-time">${f.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function updateHQ() {
+    // 누적 (데모용 - 실제론 서버에서)
+    const total = counts.pos + counts.neg + counts.qst;
+    const max   = Math.max(counts.pos + counts.neg, 1);
+    document.getElementById('hq-pos').textContent   = counts.pos;
+    document.getElementById('hq-neg').textContent   = counts.neg;
+    document.getElementById('hq-qst').textContent   = counts.qst;
+    document.getElementById('hq-total').textContent = total;
+    document.getElementById('bar-pos').style.width  = Math.round(counts.pos/max*100) + '%';
+    document.getElementById('bar-neg').style.width  = Math.round(counts.neg/max*100) + '%';
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // 본부 진입 시 실시간 구독
+  const _origGoto = goto;
+  function goto(id) {
+    _origGoto(id);
+    if (id === 'hq') window.subscribeHQ && window.subscribeHQ();
+    if (id === 'scout') loadScoutSchedule();
+  }
+
+  // 앱 시작 시 이름 확인
+  window.addEventListener('load', function() {
+    if (!localStorage.getItem('workerName')) {
+      setTimeout(function() {
+        var modal = document.getElementById('name-modal');
+        if (modal) modal.style.display = 'flex';
+        setTimeout(function() {
+          var inp = document.getElementById('name-input');
+          if (inp) inp.focus();
+        }, 150);
+      }, 500);
+    }
+  });
+
+  // 선발대 일정 Sheets 로드
+  async function loadScoutSchedule() {
+    if (!window.loadSchedule) return;
+    try {
+      const rows = await window.loadSchedule();
+      const today = new Date().toISOString().slice(0,10);
+      const todayRows = rows.filter(r => r['날짜'] && String(r['날짜']).slice(0,10) === today);
+      if (todayRows.length === 0) return;
+
+      const list = document.querySelector('#scout .schedule-list');
+      if (!list) return;
+
+      const statusClass = {'대기':'next','진행중':'now','완료':'done'};
+      const statusLabel = {'대기':'대기','진행중':'진행중','완료':'완료'};
+
+      list.innerHTML = todayRows.map(r => {
+        const st = r['상태'] || '대기';
+        const sc = statusClass[st] || 'next';
+        return '<div class="sched-item">' +
+          '<div class="sched-time">' + (r['시간'] || '') + '</div>' +
+          '<div class="sched-dot ' + sc + '"></div>' +
+          '<div class="sched-info">' +
+            '<div class="sched-place">' + (r['장소'] || '') + '</div>' +
+            '<div class="sched-note">' + (r['메모'] || '') + '</div>' +
+          '</div>' +
+          '<div class="sched-status ' + sc + '">' + statusLabel[st] + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      console.error('일정 로드 실패:', e);
+    }
+  }
+
+  // 초기화
+  goto('home');
+</script>
+</body>
+</html>
